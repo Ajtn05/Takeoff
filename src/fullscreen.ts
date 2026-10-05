@@ -6,7 +6,7 @@ type FullscreenDocument = Document & {
 };
 
 export function bindFullscreen(button: HTMLButtonElement, target: FullscreenElement,
-  options: { onError: (message: string) => void; expandWithinPage?: boolean }): void {
+  options: { onError: (message: string) => void; expandWithinPage?: boolean; onChange?: (active: boolean, expanded: boolean) => void }): void {
   const doc = document as FullscreenDocument;
   let expanded = false;
   const nativeActive = () => (doc.fullscreenElement ?? doc.webkitFullscreenElement) === target;
@@ -14,7 +14,8 @@ export function bindFullscreen(button: HTMLButtonElement, target: FullscreenElem
     const active = nativeActive() || expanded;
     target.classList.toggle('is-fullscreen', active);
     target.classList.toggle('is-expanded', expanded);
-    button.textContent = active ? expanded ? 'Exit expanded view' : 'Exit fullscreen' : 'Fullscreen';
+    if (options.onChange) options.onChange(active, expanded);
+    else button.textContent = active ? expanded ? 'Exit expanded view' : 'Exit fullscreen' : 'Fullscreen';
     button.setAttribute('aria-pressed', String(active));
   };
   const expand = () => {

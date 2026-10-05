@@ -1,30 +1,45 @@
 import { neutralControls, type Controls, type Telemetry } from '../shared/protocol';
+import { FLAT_GROUND, type GroundSampler } from './terrain';
 
 export interface FlightProfile {
   speed: number; climbRate: number; yawRate: number; acceleration: number; braking: number;
   gimbalRate: number; gimbalMin: number; gimbalMax: number; fov: number;
 }
 export const GENERIC_PROFILE: FlightProfile = {
-  speed: 6, climbRate: 2.5, yawRate: Math.PI / 2, acceleration: 4, braking: 7,
+  speed: 20, climbRate: 5, yawRate: Math.PI / 2, acceleration: 5, braking: 8,
   gimbalRate: 35, gimbalMin: -90, gimbalMax: 20, fov: 64,
 };
-export interface Obstacle { name: string; min: [number, number, number]; max: [number, number, number] }
+export type MapPoint = [number, number];
+// Aircraft envelope references DJI Air 3's published unfolded dimensions (without propellers).
+export const DRONE_DIMENSIONS = { length: 0.2588, width: 0.326, height: 0.1058, rotorDiameter: 0.22 };
+export const DRONE_RADIUS = Math.hypot((DRONE_DIMENSIONS.width - 0.03) / 2, (DRONE_DIMENSIONS.length - 0.03) / 2) + DRONE_DIMENSIONS.rotorDiameter / 2;
+export const DRONE_HALF_HEIGHT = DRONE_DIMENSIONS.height / 2;
+export interface Obstacle {
+  name: string; min: [number, number, number]; max: [number, number, number]; footprint?: MapPoint[]; topAt?: GroundSampler;
+  intersects?: (x: number, y: number, z: number, radius: number, halfHeight: number) => boolean;
+}
+export interface FlightBounds { minX: number; maxX: number; minZ: number; maxZ: number; ceiling: number; footprint?: MapPoint[] }
+export const PRACTICE_BOUNDS: FlightBounds = { minX: -120, maxX: 120, minZ: -120, maxZ: 120, ceiling: 60 };
 export const OBSTACLES: Obstacle[] = [
   { name: 'studio building', min: [-19, 0, -19], max: [-9, 7, -7] },
   { name: 'photo sculpture', min: [-1.3, 0, -14.3], max: [1.3, 5.3, -11.7] },
   ...[[12, -15], [17, -5], [-16, 8], [11, 16], [-5, -25]].map(([x, z], i) => ({
     name: `tree ${i + 1}`, min: [x - 2, 0, z - 2] as [number, number, number], max: [x + 2, 8, z + 2] as [number, number, number],
   })),
+  { name: 'west pavilion', min: [-83, 0, -62], max: [-57, 12, -44] },
+  { name: 'east studio', min: [52, 0, -75], max: [76, 9, -55] },
+  { name: 'garden hall', min: [48, 0, 54], max: [68, 8, 70] },
 ];
 export interface DroneState {
   x: number; y: number; z: number; vx: number; vy: number; vz: number;
   heading: number; yawVelocity: number; gimbal: number; bank: number; pitch: number;
   mode: Telemetry['mode']; collision: string | null;
+  takeoffY?: number;
 }
 export const PAD = { x: 0, z: 9 };
-export const GROUND_HEIGHT = 0.45;
-export const initialState = (): DroneState => ({
-  x: PAD.x, y: GROUND_HEIGHT, z: PAD.z, vx: 0, vy: 0, vz: 0, heading: 0,
+export const GROUND_HEIGHT = 0.065;
+export const initialState = (pad = PAD, heading = 0, ground: GroundSampler = FLAT_GROUND): DroneState => ({
+  x: pad.x, y: ground(pad.x, pad.z) + GROUND_HEIGHT, z: pad.z, vx: 0, vy: 0, vz: 0, heading,
   yawVelocity: 0, gimbal: -12, bank: 0, pitch: 0, mode: 'grounded', collision: null,
 });
 const approach = (value: number, target: number, amount: number) => value + Math.max(-amount, Math.min(amount, target - value));
@@ -35,14 +50,36 @@ export function headingVelocity(forward: number, right: number, heading: number)
 }
 export function takeoff(s: DroneState): boolean {
   if (s.mode !== 'grounded') return false;
-  s.mode = 'taking-off'; return true;
+  s.takeoffY = s.y + 3; s.mode = 'taking-off'; return true;
 }
 export function land(s: DroneState): boolean {
   if (s.mode !== 'flying') return false;
   s.mode = 'landing'; return true;
 }
-export function stepFlight(s: DroneState, controls: Controls, dt: number, profile = GENERIC_PROFILE, obstacles = OBSTACLES): void {
+export function pointInPolygon(x: number, z: number, polygon: MapPoint[]): boolean {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [ax, az] = polygon[i], [bx, bz] = polygon[j];
+    if ((az > z) !== (bz > z) && x < (bx - ax) * (z - az) / (bz - az) + ax) inside = !inside;
+  }
+  return inside;
+}
+export function overlapsFootprint(x: number, z: number, polygon: MapPoint[], radius = DRONE_RADIUS): boolean {
+  if (pointInPolygon(x, z, polygon)) return true;
+  return polygon.some(([ax, az], i) => {
+    const [bx, bz] = polygon[(i + 1) % polygon.length];
+    const length = (bx - ax) ** 2 + (bz - az) ** 2;
+    const t = length ? clamp(((x - ax) * (bx - ax) + (z - az) * (bz - az)) / length, 0, 1) : 0;
+    return Math.hypot(x - ax - t * (bx - ax), z - az - t * (bz - az)) < radius;
+  });
+}
+export function stepFlight(s: DroneState, controls: Controls, dt: number, profile = GENERIC_PROFILE, obstacles = OBSTACLES, bounds = PRACTICE_BOUNDS, ground: GroundSampler = FLAT_GROUND): void {
   if (dt <= 0 || dt > 0.05 || s.mode === 'collided') return;
+  const subdivisions = Math.ceil((Math.hypot(s.vx, s.vy, s.vz) * dt + profile.acceleration * dt * dt) / (DRONE_RADIUS / 2));
+  if (subdivisions > 1) {
+    for (let i = 0; i < subdivisions; i++) stepFlight(s, controls, dt / subdivisions, profile, obstacles, bounds, ground);
+    return;
+  }
   s.gimbal = clamp(s.gimbal + controls.gimbal * profile.gimbalRate * dt, profile.gimbalMin, profile.gimbalMax);
   if (s.mode === 'grounded') return;
   const automatic = s.mode === 'taking-off' || s.mode === 'landing';
@@ -56,25 +93,30 @@ export function stepFlight(s: DroneState, controls: Controls, dt: number, profil
   const scale = distance === 0 ? 0 : Math.min(1, rate * dt / distance);
   s.vx += dx * scale; s.vz += dz * scale;
   let targetClimb = input.climb * profile.climbRate;
-  if (s.mode === 'taking-off') targetClimb = clamp((GROUND_HEIGHT + 3 - s.y) * 2, 0, 1.5);
-  if (s.mode === 'landing') targetClimb = -Math.min(1, (s.y - GROUND_HEIGHT) * 2 + 0.15);
+  const rest = ground(s.x, s.z) + GROUND_HEIGHT;
+  if (s.mode === 'taking-off') targetClimb = clamp(((s.takeoffY ?? rest + 3) - s.y) * 2, 0, 1.5);
+  if (s.mode === 'landing') targetClimb = -Math.min(1, (s.y - rest) * 2 + 0.15);
   s.vy = approach(s.vy, targetClimb, profile.acceleration * dt);
   const next = { x: s.x + s.vx * dt, y: s.y + s.vy * dt, z: s.z + s.vz * dt };
-  const hit = obstacles.find((o) => next.x + 0.5 > o.min[0] && next.x - 0.5 < o.max[0] &&
-    next.y + 0.25 > o.min[1] && next.y - 0.25 < o.max[1] && next.z + 0.5 > o.min[2] && next.z - 0.5 < o.max[2]);
-  const boundary = Math.abs(next.x) > 40 || Math.abs(next.z) > 40 || next.y > 30;
-  const groundHit = next.y < GROUND_HEIGHT && s.mode !== 'landing';
+  const hit = obstacles.find((o) => next.x + DRONE_RADIUS > o.min[0] && next.x - DRONE_RADIUS < o.max[0] &&
+    next.y + DRONE_HALF_HEIGHT > o.min[1] && next.y - DRONE_HALF_HEIGHT < (o.topAt?.(next.x, next.z) ?? o.max[1]) && next.z + DRONE_RADIUS > o.min[2] && next.z - DRONE_RADIUS < o.max[2] &&
+    (!o.footprint || overlapsFootprint(next.x, next.z, o.footprint)) &&
+    (!o.intersects || o.intersects(next.x, next.y, next.z, DRONE_RADIUS, DRONE_HALF_HEIGHT)));
+  const nextGround = ground(next.x, next.z), nextRest = nextGround + GROUND_HEIGHT;
+  const boundary = next.x < bounds.minX || next.x > bounds.maxX || next.z < bounds.minZ || next.z > bounds.maxZ || next.y - nextRest > bounds.ceiling ||
+    (bounds.footprint && !pointInPolygon(next.x, next.z, bounds.footprint));
+  const groundHit = next.y < nextRest && s.mode !== 'landing';
   if (hit || boundary || groundHit) {
     s.mode = 'collided'; s.collision = hit?.name ?? (groundHit ? 'ground' : 'practice boundary');
     s.vx = s.vy = s.vz = s.yawVelocity = 0; return;
   }
-  s.x = next.x; s.y = Math.max(GROUND_HEIGHT, next.y); s.z = next.z;
-  if (s.mode === 'taking-off' && s.y >= GROUND_HEIGHT + 2.97) { s.y = GROUND_HEIGHT + 3; s.vy = 0; s.mode = 'flying'; }
-  if (s.mode === 'landing' && s.y <= GROUND_HEIGHT + 0.01) {
-    s.y = GROUND_HEIGHT; s.vx = s.vy = s.vz = 0; s.mode = 'grounded';
+  s.x = next.x; s.y = Math.max(nextRest, next.y); s.z = next.z;
+  if (s.mode === 'taking-off' && s.y >= (s.takeoffY ?? nextRest + 3) - 0.03) { s.y = s.takeoffY ?? nextRest + 3; s.vy = 0; s.mode = 'flying'; }
+  if (s.mode === 'landing' && s.y <= nextRest + 0.01) {
+    s.y = nextRest; s.vx = s.vy = s.vz = 0; s.mode = 'grounded';
   }
   const [bodyRightX, bodyRightZ] = headingVelocity(0, 1, s.heading);
   const [bodyForwardX, bodyForwardZ] = headingVelocity(1, 0, s.heading);
-  s.bank = approach(s.bank, -(s.vx * bodyRightX + s.vz * bodyRightZ) / profile.speed * 0.22, dt * 0.9);
-  s.pitch = approach(s.pitch, -(s.vx * bodyForwardX + s.vz * bodyForwardZ) / profile.speed * 0.16, dt * 0.9);
+  s.bank = approach(s.bank, clamp(-(s.vx * bodyRightX + s.vz * bodyRightZ) / profile.speed, -1, 1) * 0.42, dt * 0.9);
+  s.pitch = approach(s.pitch, clamp(-(s.vx * bodyForwardX + s.vz * bodyForwardZ) / profile.speed, -1, 1) * 0.42, dt * 0.9);
 }

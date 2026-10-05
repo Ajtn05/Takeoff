@@ -1,10 +1,10 @@
 # Drone simulator
 
-Practice camera-drone flight and photo composition on your laptop. Fly with the keyboard or use an Android phone as a two-stick Mode 2 controller, connected by USB or local Wi-Fi.
+Practice camera-drone flight and photo composition on your laptop. Fly with the keyboard or use a phone as a two-stick Mode 2 controller. A hosted deployment supports wireless pairing over Wi-Fi or mobile data; the local version also supports Android USB and local Wi-Fi.
 
 The observer view shows where the drone is going. The drone camera shows the resulting composition. Use both to learn how heading, movement, and camera tilt affect a shot, then switch to **Camera only** to practice framing without the observer view.
 
-![Simulator showing the practice park, drone camera, flight controls, and hover lesson](docs/images/simulator.jpg)
+![Takeoff flight station with adjustable observer and drone camera views and floating flight instruments](docs/images/workspace.png)
 
 ## What you can practice
 
@@ -12,13 +12,33 @@ The observer view shows where the drone is going. The drone camera shows the res
 - **Orientation:** compare movement from a fixed observer view with movement relative to the drone's heading.
 - **Photography:** tilt the stabilized camera, use the thirds grid, frame the orange sculpture, and download camera photos as PNGs.
 - **Coordinated movement:** use both phone sticks together for slow reveals and changes of viewpoint.
-- **Independent practice:** choose from six lesson prompts, reset a flight, and use fullscreen for more space.
+- **Free flight:** take off, explore, reset a flight, and use fullscreen for more space.
+- **Flexible workspace:** choose camera-only, observer-only, adjustable side-by-side or stacked views, or the Classic sidebar. Move, collapse, and restyle the flight instruments; workspace preferences are saved locally.
+- **Campus photography:** choose Ateneo de Manila's Loyola Heights campus and start near one of ten landmarks, or explore the expanded 240 × 240 m practice park.
+- **Speed and terrain:** fly up to 20 m/s, choose slower 5 or 10 m/s limits for framing, and practice over the campus's modeled elevation.
 
-This is a working prototype with one practice park and a generic assisted-flight profile. It runs locally, requires no account, and works without internet after dependencies and the app are installed and built. The phone controller opens in the browser; there is no phone app to install.
+This is a working prototype with a practice park, a simplified Ateneo campus map, and a generic assisted-flight profile. Learners need no account or phone app. The hosted version opens from a link with no installation. The local version works without internet after dependencies and the app are installed and built. Campus geometry is bundled with the app.
 
-[Get started](#get-started) · [Pair a phone](#pair-an-android-phone) · [Controls](#controls) · [Lessons](#lessons) · [Troubleshooting](#troubleshooting) · [Development](#development)
+[Open a hosted version](#open-a-hosted-version) · [Host your own](docs/HOSTING.md) · [Run locally](#get-started) · [Pair a phone](#pair-an-android-phone) · [Controls](#controls) · [Troubleshooting](#troubleshooting) · [Development](#development)
+
+## Open a hosted version
+
+Once an owner has deployed Takeoff, learners only need the deployment's HTTPS link:
+
+1. Open the link on a laptop with a current WebGL 2 browser. Keyboard flight is available immediately.
+2. To use a phone, select **Pair phone** and scan the QR code with the phone camera, or use **Copy phone link** to open the full link on the phone.
+3. Rotate the phone to landscape, center both sticks, and select **Enable controls**.
+4. Close the pairing dialog on the laptop, then select **Take off** on either device.
+
+Both devices need internet access. They can use the same Wi-Fi, different networks, or mobile data. Each laptop page has its own private pairing link; keep the link with the person controlling that flight. Reloading the laptop page or restarting the server requires a new link. Multiple stations can practice independently, up to the prototype's 32-session limit; performance at that capacity has not been measured.
+
+**Phone USB on a hosted app:** plugging in an Android phone does not give a website access to the existing ADB connection. Direct cable-only control uses the [local USB setup](#usb-use-the-cable-instead-of-wi-fi). OS-supported USB tethering can provide internet for the hosted version, but controls still use the hosted relay; this is not a direct USB control transport. The hosted UI offers wireless pairing only.
+
+[Hosting instructions](docs/HOSTING.md) include a free Render deployment configuration. No public deployment URL has been created yet.
 
 ## Get started
+
+These steps are for running Takeoff on your own laptop. Learners using a hosted link can skip them.
 
 ### What you need
 
@@ -50,18 +70,20 @@ Then open [http://127.0.0.1:8082](http://127.0.0.1:8082). Use that same port for
 
 ### Your first flight with the keyboard
 
-1. Leave **Controls** set to **Keyboard** and select **Start practice**.
+1. Leave **Controls** set to **Keyboard**.
 2. Select **Take off**, or press **T**. The drone climbs automatically to 3 m.
 3. Hold **W** briefly to climb toward 4 m, then release it. Watch the drone brake into a hover.
 4. Use the **arrow keys** to move and **A / D** to turn. Compare the observer and camera views.
 5. Use **R / F** or the **Camera tilt** slider to frame the orange sculpture. Select **Capture photo**, then select its thumbnail under **Photos** to download it.
 6. Return over the home pad and press **L** to land. **Land descends at the current location**; it does not return to the pad automatically.
 
-Press **Space** to pause or resume. After a collision, select **Reset**, then **Start practice** to try again.
+Takeoff starts the simulation automatically from the ground. Press **Space** to pause or resume. After a collision, select **Reset**, then **Take off** to try again.
 
 ## Pair an Android phone
 
 The laptop renders the simulator; the phone sends controls and displays flight status. Keep both browser pages open. Only one phone can control a laptop session at a time.
+
+For a hosted deployment, use the [wireless QR pairing steps above](#open-a-hosted-version). The following USB and LAN instructions apply to a local server.
 
 ### USB: use the cable instead of Wi-Fi
 
@@ -73,7 +95,7 @@ USB pairing bypasses the Wi-Fi network. The local server still runs on the Mac, 
 4. On the laptop, select **Pair phone**, choose **USB cable · no Wi-Fi**, and select **Connect USB phone**.
 5. Wait for **USB connection ready**. Scan the QR code with the phone's camera or open the complete **Open on phone** URL in its browser, including the part after `#`.
 6. Rotate the phone to landscape. Leave both sticks centered and select **Enable controls**.
-7. Close the laptop pairing dialog and select **Start practice**. Pairing automatically selects **Phone · Mode 2** as the control source.
+7. Close the laptop pairing dialog. Pairing automatically selects **Phone · Mode 2** as the control source.
 8. Select **Take off** on either device to begin flying.
 
 The app finds ADB through `PATH`, the usual macOS Android SDK location, `ANDROID_HOME`, `ANDROID_SDK_ROOT`, or `ADB_PATH`. If it cannot find a separately downloaded copy, start the server with its absolute path, for example:
@@ -120,19 +142,19 @@ If the terminal reports `adb: command not found`, use the executable's full path
 
 3. Open the simulator on the laptop, select **Pair phone**, and choose a **Wi-Fi** address from the **Connection** menu. If several addresses appear, choose the interface connected to the phone's network.
 4. Scan the QR code or open the displayed URL on the phone. Rotate to landscape and select **Enable controls**.
-5. Close the pairing dialog and select **Start practice** on the laptop.
+5. Close the pairing dialog and select **Take off** on either device. No separate laptop start is needed for a grounded flight.
 
 Allow the local Node server through the Mac firewall if prompted. Guest or classroom networks can block connections between devices; use USB if the phone cannot reach the laptop.
 
 ### Pausing, resuming, and changing phones
 
-**Pause controls** on the phone disables its input and pauses the flight. To continue, center the sticks, select **Enable controls** on the phone, then **Start practice** on the laptop. Use this same sequence after a cable disconnect, connection loss, or either page being hidden.
+**Pause controls** on the phone disables its input and pauses the flight. To continue, center the sticks and select **Enable controls** on the phone. If the drone is grounded, select **Take off** on either device; if it is airborne, select **Start practice** on the laptop. Use this same sequence after a cable disconnect, connection loss, or either page being hidden.
 
 Keep the phone awake. The controller requests a screen wake lock where supported; if it says **Set screen timeout manually**, adjust the phone's timeout. Plain HTTP over Wi-Fi cannot use this feature. **Fullscreen** on the phone hides browser controls where supported, and **Stick size** adjusts the touch areas.
 
 To replace the controlling phone, open **Pair phone** and select **Revoke phone & renew link**, then pair with the new QR code. A second phone cannot take over an occupied session. Links expire after 12 hours; after restarting the server or reloading the laptop page, use the current pairing link.
 
-To return to keyboard practice, choose **Keyboard** in the laptop's **Controls** menu and select **Start practice**.
+To return to keyboard practice, choose **Keyboard** in the laptop's **Controls** menu. Select **Take off** from the ground, or **Start practice** to resume an airborne flight.
 
 ## Controls
 
@@ -151,6 +173,8 @@ Mode 2 puts altitude and heading on the left stick, with forward and sideways mo
 
 Movement follows the drone's heading. When the drone faces you, its rightward movement appears leftward in the fixed observer view. Releasing the sticks or movement keys commands a stop, with a short braking response into hover.
 
+**Speed limit** selects **5 m/s · Fine control**, **10 m/s · Cruise**, or **20 m/s · Fast flight**. Maximum horizontal speed includes diagonal movement. Acceleration is limited to 5 m/s² and braking to 8 m/s², so full-speed flight takes about four seconds to accelerate and 25 m to stop with centered sticks. Climb and descent are limited to 5 m/s; automatic takeoff and landing are slower.
+
 The drone body banks during movement while the camera horizon stays level. Turning the drone changes camera heading; gimbal tilt changes its vertical angle independently. Takeoff and landing are automatic maneuvers; movement input resumes after takeoff finishes.
 
 Keyboard flight requires focus on the simulator, away from menus and sliders. The laptop's camera-tilt slider is disabled while **Phone · Mode 2** is selected.
@@ -161,30 +185,47 @@ Keyboard flight requires focus on the simulator, away from menus and sliders. Th
 | --- | --- |
 | Fixed view | Compare the drone's heading and movement from one viewpoint. |
 | Follow drone | Keep the observer camera near the drone as it moves. |
+| Map overview | See the whole selected map from above, with north toward the top. |
 | Observer aids | Show the ground grid, labels, flight trail, camera direction, and field-of-view outline. |
 | Thirds grid | Place subjects using a rule-of-thirds guide in the camera view. |
-| Camera only | Hide the observer view and practice from the drone camera. |
-| Fullscreen | Expand the flight views and controls; lessons and photos return when you exit. |
+| Campus trees | Show or hide the Ateneo acacias and their collisions. The setting is saved between visits. |
+| Side by side | Show both views with an adjustable divider. Drag the divider, or focus it and use arrow keys, to change the proportions. On narrow screens the views stack. |
+| Stacked | Arrange the observer above the camera with an adjustable horizontal divider. |
+| Camera only | Practice from the drone camera with floating flight instruments. |
+| Observer only | Use the full workspace for the observer, with flight instruments and capture controls still available. |
+| Classic | Use the original observer and camera sidebar arrangement, with flight instruments docked below the camera. |
+| Fullscreen | Fill the window with flight views, compact instruments, and flight controls; restore the desktop workspace when you exit. |
 | Low graphics | Disable shadows and reduce rendering resolution on slower hardware. |
 
 Select **Exit fullscreen** or press **Escape** to return to the normal layout. If native fullscreen is unavailable, the simulator expands within the browser panel instead.
 
-**Altitude** is height above the drone's ground resting position, **Ground speed** is horizontal speed, **Heading** is the drone's direction in degrees, and **Gimbal tilt** is the camera's vertical angle, from −90° to +20°.
+Fullscreen hides the title, location and layout bars, display settings, control-source selector, photos, and performance footer. When both views are active, the observer fills the screen and the 16:9 camera becomes an inset in the upper right. Camera-only and observer-only layouts keep their selected view. The floating console retains reset, play/pause, takeoff, landing, capture, flight status, and exit. Instruments start compact and can be expanded; exiting restores the desktop layout and instrument state. [Fullscreen preview](docs/images/fullscreen.png).
 
-## Lessons
+Desktop controls use icons in separate modules with raised buttons and recessed readouts. Hover or focus a control for its name and keyboard shortcut; display toggles are highlighted when active. The play/pause button starts or pauses practice. Flight status appears once in the layout bar, or in the floating fullscreen console; hover or focus it for the pause reason. A collision shows a persistent **Reset flight** prompt that returns the drone to the launch point. Location hints and camera specifications are available from the information icons.
 
-Choose a lesson from the menu beside the prompt. Lessons change the exercise instructions without resetting the flight, so you can move between them during a session.
+The layout icons select the viewing arrangement. **Equalize views** gives both views equal space; **Reset workspace** restores the default side-by-side layout and instrument settings. The drone camera keeps a 16:9 frame as the views resize, matching exported photos.
 
-| Lesson | Exercise |
-| --- | --- |
-| 01 · Hover | Take off, climb to 4 m, release both sticks, and hold a steady hover for two seconds. |
-| 02 · Translate | Fly through the amber marker while maintaining the starting heading. |
-| 03 · Orientation | Turn to 180° and compare stick direction with motion in the fixed observer view. |
-| 04 · Composition | Frame the orange sculpture using heading and gimbal tilt, then capture a photo. |
-| 05 · Reveal | Move slowly sideways while turning to keep the sculpture in view. |
-| 06 · Land | After taking a photo, return over the home pad and land. |
+The **Flight** instrument panel floats in all layouts except desktop Classic. Drag its title to place it anywhere inside the workspace, or focus the title and use arrow keys to move it (**Home** returns it to the lower left). The half-filled circle switches between a translucent glass display and an opaque panel; the chevron collapses or expands the instruments. A collapsed panel keeps live altitude, speed, and heading visible, while hiding gimbal and vertical-speed details. Layout, divider proportions, instrument position, transparency, and collapse state are saved in this browser. Instruments remain within the workspace when the window resizes or fullscreen changes.
 
-The prompts include basic completion feedback. The reveal lesson is open practice. **Subject in frame** indicates that the sculpture is visible within the camera's framing area; an obstruction can prevent this status. It is a framing aid rather than a photo-quality score.
+**Altitude · AGL** is height above the drone's resting position on the ground directly below it, **Ground speed** is horizontal speed, **Heading** is the drone's direction in degrees, and **Gimbal tilt** is the camera's vertical angle, from −90° to +20°. **V/S** shows vertical speed, positive while climbing. The altitude and speed scales show their values relative to the map ceiling and selected speed limit. Flying horizontally maintains world altitude, so clearance decreases over rising terrain. Takeoff climbs 3 m above the launch point; landing follows the local terrain.
+
+### Practice maps
+
+Use **Map** above the views to choose **Practice park** or **Ateneo de Manila · Loyola Heights**. The park has a **240 × 240 m** flight area and a **60 m** simulator ceiling. The campus follows its mapped boundary, approximately **930 × 1,590 m**, with an **80 m** simulator ceiling.
+
+On the campus, **Photo spot** provides launch pads near the **Church of the Gesù, Areté, Rizal Library, Blue Eagle Gym, Manila Observatory, Science Education Complex, Horacio de la Costa Hall, Ricardo & Rosita Leong Hall, JG School of Management, and International Residence Halls**. Launch placement checks for an open view of the selected building from a 3 m hover. Pads and the amber exercise markers are simulator additions. Switching maps or spots pauses and resets the flight; existing photos remain in the gallery. Phone control must be enabled again after a location change. Reset returns to the selected spot.
+
+The campus uses mapped building footprints, paths, roads, and fields in a WGS84 local meter projection. **One scene unit is one meter**, horizontally and vertically, with no terrain exaggeration. The aircraft's unfolded body measures **0.326 × 0.2588 × 0.1058 m**, using [DJI Air 3's published dimensions](https://www.dji.com/air-3/specs) as a size reference. Propeller size is estimated; the generic flight model is separate from this visual reference. Collision checks use the aircraft's physical envelope and subdivide fast movement to detect thin obstacles.
+
+Campus terrain comes from **30 m SRTM elevation data**, resampled to a 30 m metric grid and lightly smoothed to reduce radar and canopy noise. Roads, fields, launch-pad markings, and ground contact follow the same triangle surface. These historical radar elevations represent broad slopes and can include vegetation and structures; they do not resolve curbs, stairs, individual building platforms, or current survey elevations. The simulator's boundary and ceiling describe its practice area.
+
+Landmark modeling uses published descriptions and photographs: Gesù has its tetrahedral roof, glazed cupola, cross, and entrance columns; Areté has four floors and facade fins; Rizal Library has five floors, brick accents, and window bands; Blue Eagle Gym has a curved roof. References include the architects' pages for [Church of the Gesù](https://www.rchitects.ph/projects/project/church-of-the-gesu/) and [Rizal Library](https://www.rchitects.ph/projects/project/ateneo-rizal-library/), Ateneo's [Areté building description](https://sites.google.com/ateneo.edu/sustainabledevelopmentgoals/initiatives/arete), and [Rizal Library venue information](https://sites.google.com/ateneo.edu/9rlic/venue). Building heights and facade proportions remain estimates; generic buildings use mapped heights or levels when available. This is a practice model, and its geometry can be incomplete or outdated.
+
+The academic halls use the supplied building photographs and the [Wikimedia Commons building gallery](https://commons.wikimedia.org/wiki/Category:Buildings_of_Ateneo_de_Manila_University) for warm brick, cream bands, blue glass, entrance towers, and facade piers. Brickwork, roof tiles, bark, and foliage use bundled procedural materials. The satellite reference guides approximate wooded areas and roadside planting: **864 acacias**, about **13–19 m tall**, supplement the two mapped tree nodes. Their broad crowns shade roads, while raised branching leaves space to fly underneath. Trunks, tapered branches, and canopy lobes have separate collision shapes. Fields, mapped buildings, and road surfaces stay clear of added trunks. Trees use shared low polygon geometry with per-instance canopy colors: 164,160 triangles in 60 spatial rendering batches for the entire forest. Both views reuse shadows; moving aircraft refresh them at most 10 times per second. The **Campus trees** display button hides the trees, their shadows, and their collisions, and saves the preference. Tree positions, dimensions, and building proportions are estimates; the screenshot does not cover the far northern high school area, where no additional woodland has been inferred.
+
+Campus geometry was retrieved on **5 October 2026** from [OpenStreetMap](https://www.openstreetmap.org/way/138294127), © OpenStreetMap contributors. The bundled [campus dataset](public/data/ateneo-campus.json) is derived data distributed under the [Open Database License](https://opendatacommons.org/licenses/odbl/1-0/). [scripts/import-ateneo.py](scripts/import-ateneo.py) documents how to regenerate it from public OSM API extracts. [Ateneo Areté](https://arete.ateneo.edu/) provides the university's own information about the arts venue.
+
+The bundled [elevation dataset](public/data/ateneo-elevation.json) uses SRTM data courtesy of the U.S. Geological Survey, distributed through [Mapzen/AWS Terrain Tiles](https://registry.opendata.aws/terrain-tiles/). The source survey dates to 2000. See the provider's [data sources](https://github.com/tilezen/joerd/blob/master/docs/data-sources.md) and [attribution](https://github.com/tilezen/joerd/blob/master/docs/attribution.md). To regenerate the crop after importing campus geometry, download the source tile named in the dataset and run `python3 scripts/import-elevation.py N14E121.hgt.gz`.
 
 ## Photos
 
@@ -214,9 +255,11 @@ The gallery keeps the six most recent captures in memory. **Download any photos 
 
 The flight model approximates an assisted camera drone using bounded speed, acceleration, braking, yaw, and gimbal tilt. It does not model motors or aerodynamics. Touch sticks differ from a physical controller, and the profile is not tied to a specific drone model.
 
-Wind, battery behavior, obstacle avoidance, gamepad input, exposure controls, video recording, additional scenes, and a persistent gallery are not implemented. Colliding with a building, tree, sculpture, ground, or practice boundary stops the exercise and requires a reset.
+Wind, battery behavior, obstacle avoidance, gamepad input, exposure controls, video recording, and a persistent gallery are not implemented. Colliding with a building, mapped tree, sculpture, ground, or practice boundary stops the exercise and requires a reset. Campus building collisions follow their footprints so open courtyards remain accessible.
 
 ## Development
+
+UI changes follow the [Takeoff design rationale and research](docs/DESIGN.md): a flight-focused workspace, readable instruments, restrained surfaces, and functional icon controls.
 
 For local development:
 
@@ -235,7 +278,7 @@ npm run build
 npm run test:browser
 ```
 
-Unit and WebSocket integration tests cover flight behavior, collisions, stale input, controller ownership, reconnection, revocation, action deduplication, and USB forwarding. Browser tests use installed Google Chrome by default and start a production server on port **8081**; build first and keep that port free. They cover keyboard flight, both views, PNG export, simultaneous touch input, release/cancellation, and disconnect/background pauses.
+Unit and WebSocket integration tests cover flight behavior, map boundaries, campus launch clearance, polygon collisions, stale input, controller ownership, reconnection, revocation, action deduplication, and USB forwarding. Browser tests use installed Google Chrome by default and start a production server on port **8081**; build first and keep that port free. They cover map/spot switching, photo preservation, direct keyboard and phone takeoff, takeoff readiness after pauses and resets, all workspace layouts, divider resizing, instrument movement and saved preferences, keyboard operation of panel controls, fullscreen, narrow and short windows, PNG export, simultaneous touch input, release/cancellation, and disconnect/background pauses.
 
 To use Playwright's Chromium instead:
 
@@ -248,7 +291,7 @@ Screenshots and failure traces are written to `test-results/`. Browser emulation
 
 ### How it works
 
-- The laptop browser owns flight and lesson state and runs the simulation at a fixed 60 Hz step. The phone sends complete control inputs at approximately 60 Hz plus immediate changes.
+- The laptop browser owns flight state and runs the simulation at a fixed 60 Hz step. The phone sends complete control inputs at approximately 60 Hz plus immediate changes.
 - The Node server serves bundled assets, authenticates the laptop and phone session roles, and relays controls. Phone messages do not supply drone positions.
 - Phone input expires after 250 ms in both the server and laptop. Page hiding, connection loss, send-queue overflow, and display stalls pause the exercise; resuming requires fresh input. Connection generations and sequence numbers reject old or repeated inputs.
 - Takeoff, landing, and capture use action IDs and acknowledgments so retries cannot execute the same action twice within a connection generation.

@@ -14,7 +14,8 @@
     "start": "NODE_ENV=production node dist-server/server/index.js",
     "start:lan": "HOST=0.0.0.0 npm start",
     "test": "node --import tsx --test tests/*.test.ts",
-    "test:browser": "playwright test"
+    "test:browser": "playwright test",
+    "test:hosted": "playwright test --config playwright.hosted.config.ts"
   },
   "dependencies": {
     "qrcode": "1.5.4",

@@ -58,7 +58,7 @@ export function mount(app: HTMLElement): void {
     el<HTMLButtonElement>('enable').disabled = !welcomed || document.hidden;
     el('enable').textContent = ready ? 'Pause controls' : 'Enable controls';
     const active = ready && status && !status.paused;
-    el<HTMLButtonElement>('phone-takeoff').disabled = !active || status?.mode !== 'grounded';
+    el<HTMLButtonElement>('phone-takeoff').disabled = !ready || status?.mode !== 'grounded';
     el<HTMLButtonElement>('phone-land').disabled = !active || status?.mode !== 'flying';
     el<HTMLButtonElement>('phone-capture').disabled = !active || status?.mode === 'collided';
     el<HTMLButtonElement>('tilt-up').disabled = el<HTMLButtonElement>('tilt-down').disabled = !ready;
@@ -69,7 +69,7 @@ export function mount(app: HTMLElement): void {
   };
   const suspend = (message: string) => { clear(); socket.send({ type: 'suspend', reason: message }); deactivate(message); };
   const receive = (message: ServerMessage) => {
-    if (message.type === 'welcome') { welcomed = true; generation = message.generation; deactivate('Connected. Enable controls, then start practice on the laptop.'); }
+    if (message.type === 'welcome') { welcomed = true; generation = message.generation; deactivate('Connected. Enable controls to take off.'); }
     if (message.type === 'connection') {
       ready = false; clear(); generation = message.generation; seq = 0; ready = message.ready; pending.clear();
       if (ready) { lastStatus = performance.now(); sendInput(); }
@@ -80,7 +80,7 @@ export function mount(app: HTMLElement): void {
       el('phone-altitude').textContent = `${status.altitude.toFixed(1)} m`; el('phone-speed').textContent = `${status.speed.toFixed(1)} m/s`;
       el('phone-heading').textContent = `${Math.round(status.heading)}°`; el('phone-gimbal').textContent = `${Math.round(status.gimbal)}°`;
       el('phone-timing').textContent = `RTT ${Math.round(rtt)} ms · receipt → frame ${Math.round(status.receiptToFrameMs)} ms`;
-      if (ready) el('phone-message').textContent = status.paused ? 'Controls ready. Start practice on the laptop.' : status.reason;
+      if (ready) el('phone-message').textContent = status.paused && status.mode === 'grounded' ? 'Controls ready. Take off when ready.' : status.paused ? 'Controls ready. Resume practice on the laptop.' : status.reason;
       updateButtons();
     }
     if (message.type === 'pong' && message.id === pingId) rtt = performance.now() - pingAt;
@@ -100,7 +100,7 @@ export function mount(app: HTMLElement): void {
     socket.send({ type: 'resume', generation, controls }); void requestWake();
   };
   const action = (name: Action) => {
-    if (!ready || !status || status.paused) return;
+    if (!ready || !status || (status.paused && !(name === 'takeoff' && status.mode === 'grounded'))) return;
     const id = `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 12)}`;
     pending.set(id, { generation, action: name, at: performance.now(), tries: 1 });
     socket.send({ type: 'action', generation, id, action: name });

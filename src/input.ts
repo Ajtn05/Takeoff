@@ -22,7 +22,7 @@ export class KeyboardInput {
   constructor(private onAction: (action: 'takeoff' | 'land' | 'capture' | 'pause') => void) {
     const controlKeys = new Set(['KeyW', 'KeyS', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyR', 'KeyF', 'KeyT', 'KeyL', 'KeyC', 'Space']);
     window.addEventListener('keydown', (event) => {
-      if (event.target instanceof HTMLElement && event.target.closest('input, select, textarea, dialog')) return;
+      if (event.defaultPrevented || event.target instanceof HTMLElement && (event.target.closest('input, select, textarea, dialog') || event.code === 'Space' && event.target.closest('button, [role=separator]'))) return;
       if (!controlKeys.has(event.code)) return;
       event.preventDefault(); this.keys.add(event.code);
       if (!event.repeat) {

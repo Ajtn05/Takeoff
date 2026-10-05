@@ -32,7 +32,7 @@ export type ServerMessage =
   | { type: 'status'; status: Telemetry }
   | { type: 'error'; message: string }
   | { type: 'pong'; id: number };
-export interface SessionInfo { sessionId: string; hostToken: string; usbUrl: string; lanUrls: string[]; expiresAt: number }
+export interface SessionInfo { sessionId: string; hostToken: string; publicUrl?: string; usbUrl?: string; lanUrls: string[]; expiresAt: number }
 
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const sequence = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) >= 0;

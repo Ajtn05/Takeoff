@@ -23,11 +23,11 @@ test('acceleration is bounded, diagonal speed is bounded, centered sticks brake 
   const controls = { ...neutralControls(), forward: 1, right: 1 };
   stepFlight(s, controls, 1 / 60, GENERIC_PROFILE, []);
   close(Math.hypot(s.vx, s.vz), GENERIC_PROFILE.acceleration / 60);
-  for (let i = 0; i < 130; i++) stepFlight(s, controls, 1 / 60, GENERIC_PROFILE, []);
+  for (let i = 0; i < 300; i++) stepFlight(s, controls, 1 / 60, GENERIC_PROFILE, []);
   close(Math.hypot(s.vx, s.vz), GENERIC_PROFILE.speed);
   const before = { x: s.x, z: s.z };
-  for (let i = 0; i < 120; i++) stepFlight(s, neutralControls(), 1 / 60, GENERIC_PROFILE, []);
-  close(s.vx, 0); close(s.vz, 0); assert.ok(Math.hypot(s.x - before.x, s.z - before.z) < 3);
+  for (let i = 0; i < 180; i++) stepFlight(s, neutralControls(), 1 / 60, GENERIC_PROFILE, []);
+  close(s.vx, 0); close(s.vz, 0); assert.ok(Math.hypot(s.x - before.x, s.z - before.z) <= GENERIC_PROFILE.speed ** 2 / (2 * GENERIC_PROFILE.braking));
 });
 test('gimbal limits are independent of heading and visible banking', () => {
   const s = initialState(); s.mode = 'flying'; s.y = 10;

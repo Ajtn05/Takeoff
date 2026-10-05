@@ -1,5 +1,6 @@
 :root {
-  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-family:var(--ui);
   color:#e9eeed;
   background:#101a22;
   font-synthesis:none;
@@ -153,7 +154,7 @@ input:disabled {
   flex-shrink:0;
 }
 .simulator {
-  max-width:1600px;
+  max-width:1800px;
   padding:0 24px;
   margin:auto;
 }
@@ -206,8 +207,7 @@ input:disabled {
 .simulator.is-fullscreen .observer-view {
   min-height:0;
 }
-.simulator.is-fullscreen .lesson-card,
-.simulator.is-fullscreen .lower-row {
+.simulator.is-fullscreen .photo-library {
   display:none;
 }
 .simulator.is-fullscreen .camera-only .camera-view {
@@ -218,7 +218,7 @@ input:disabled {
   display:grid;
   grid-template-columns:minmax(0,1.75fr) minmax(320px,1fr);
   position:relative;
-  min-height:440px;
+  min-height:clamp(480px,55dvh,720px);
   border:1px solid #3a4b50;
   border-radius:11px;
   overflow:hidden;
@@ -239,7 +239,7 @@ input:disabled {
   overflow:hidden;
 }
 .observer-view {
-  min-height:440px;
+  min-height:0;
   border-right:1px solid #3a4b50;
 }
 .view-heading {
@@ -481,71 +481,8 @@ input:disabled {
   gap:10px;
   font-size:11px;
 }
-.lesson-card {
-  display:flex;
-  align-items:center;
-  gap:24px;
-  padding:20px 0;
-  border-bottom:1px solid var(--line);
-}
-.lesson-number {
-  display:block;
-  font-size:11px;
-  color:var(--muted);
-}
-.lesson-content {
-  flex:1;
-}
-.lesson-content h2 {
-  margin-top:6px;
-}
-.lesson-content p {
-  font-size:12px;
-  color:#c3d0d1;
-  line-height:1.7;
-  margin-top:8px;
-  max-width:700px;
-}
-.lesson-feedback {
-  font-size:11px;
-  color:#8ea6af;
-  display:block;
-  margin-top:10px;
-}
-.lesson-feedback.complete {
-  color:var(--accent);
-}
-.lesson-card select {
-  margin-top:0;
-}
-.lower-row {
-  display:grid;
-  grid-template-columns:1.4fr 1fr;
-  padding:23px 0;
-  gap:28px;
-}
-.keyboard-help>div {
-  display:flex;
-  gap:20px;
-  flex-wrap:wrap;
-  margin-top:14px;
-}
-.keyboard-help>div>span {
-  font-size:10px;
-  color:#93a7ae;
-  display:flex;
-  gap:3px;
-  align-items:center;
-}
-.keyboard-help kbd {
-  margin:0;
-}
-.keyboard-help kbd:last-of-type {
-  margin-right:4px;
-}
 .photo-library {
-  padding-left:25px;
-  border-left:1px solid var(--line);
+  padding:16px 0;
 }
 .photo-library .section-label {
   display:flex;
@@ -654,6 +591,13 @@ dialog p {
 }
 .qr-wrap canvas {
   border-radius:8px;
+}
+.qr-wrap canvas[hidden] {
+  display:none;
+}
+#copy-pair-url {
+  margin-top:10px;
+  font-size:11px;
 }
 .url-label {
   font:9px var(--mono);
@@ -959,8 +903,69 @@ dialog p {
   --stick:clamp(180px,33vh,310px);
 }
 @media(min-width:1450px) {
-  .viewport-stage,.observer-view {
-    min-height:505px;
+  .viewport-stage {
+    min-height:clamp(520px,58dvh,780px);
+  }
+}
+
+[hidden] {
+  display:none !important;
+}
+.map-strip {
+  display:flex;
+  align-items:center;
+  gap:20px;
+  padding:0 0 16px;
+  flex-wrap:wrap;
+}
+.map-choice {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-shrink:0;
+}
+#map-tip {
+  flex:1;
+  min-width:200px;
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.6;
+}
+.map-credit {
+  font-size:10px;
+  line-height:1.7;
+  color:var(--muted);
+  padding-bottom:16px;
+}
+.map-credit a {
+  color:#b4d5c5;
+  text-underline-offset:3px;
+}
+.map-overview .pause-overlay {
+  background:transparent;
+  backdrop-filter:none;
+  justify-content:flex-start;
+  padding-top:64px;
+}
+.simulator.is-fullscreen .map-strip {
+  flex-shrink:0;
+}
+.simulator.is-fullscreen .map-credit {
+  display:none;
+}
+.simulator.is-fullscreen .viewport-stage {
+  min-height:440px;
+}
+@media(max-width:760px) {
+  .map-strip {
+    gap:12px;
+  }
+  .map-choice select {
+    max-width:calc(100vw - 110px);
+    font-size:11px;
+  }
+  #map-tip {
+    flex-basis:100%;
   }
 }
 @media(max-width:1100px) {
@@ -981,9 +986,6 @@ dialog p {
   }
   .source-control {
     margin-left:auto;
-  }
-  .keyboard-help>div {
-    gap:10px;
   }
   .telemetry strong {
     font-size:20px;
@@ -1027,24 +1029,6 @@ dialog p {
   }
   .camera-column {
     min-width:0;
-  }
-  .lesson-card {
-    gap:13px;
-  }
-  .lesson-card select {
-    max-width:125px;
-    font-size:10px;
-  }
-  .lesson-content h2 {
-    font-size:17px;
-  }
-  .lower-row {
-    grid-template-columns:1fr;
-    gap:23px;
-  }
-  .photo-library {
-    padding-left:0;
-    border-left:0;
   }
   .simulator footer {
     flex-wrap:wrap;

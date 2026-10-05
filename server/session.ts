@@ -8,10 +8,13 @@ const matches = (a: string, b: string) => {
   return actual.length === expected.length && timingSafeEqual(actual, expected);
 };
 type Ack = Extract<ServerMessage, { type: 'ack' }>;
+// Allow brief network interruptions, then free stations abandoned by closed tabs.
+export const ABANDONED_SESSION_TTL_MS = 60_000;
 export interface Session {
   id: string; hostToken: string; joinToken: string; expiresAt: number;
   host?: WebSocket; controller?: WebSocket; generation: number; ready: boolean;
   lastInputAt: number; lastHostAt: number; lastSeq: number;
+  hostDisconnectedAt?: number;
   actions: Map<string, Ack | null>;
 }
 export class SessionRelay {
@@ -24,7 +27,7 @@ export class SessionRelay {
   create(): Session {
     const session: Session = { id: randomBytes(12).toString('base64url'), hostToken: secret(), joinToken: secret(),
       expiresAt: this.now() + 12 * 60 * 60 * 1000, generation: 0, ready: false,
-      lastInputAt: 0, lastHostAt: 0, lastSeq: -1, actions: new Map() };
+      lastInputAt: 0, lastHostAt: 0, lastSeq: -1, hostDisconnectedAt: this.now(), actions: new Map() };
     this.sessions.set(session.id, session); return session;
   }
   authenticatedHost(id: string, token: string): boolean {
@@ -50,8 +53,8 @@ export class SessionRelay {
   checkTimeouts(): void {
     const now = this.now();
     for (const s of this.sessions.values()) {
-      if (now > s.expiresAt) {
-        s.host?.close(4001, 'Session expired'); s.controller?.close(4001, 'Session expired'); this.sessions.delete(s.id); continue;
+      if (now > s.expiresAt || (!s.host && s.hostDisconnectedAt !== undefined && now - s.hostDisconnectedAt > ABANDONED_SESSION_TTL_MS)) {
+        s.host?.close(4001, 'Session expired'); s.controller?.close(4001, 'Station closed. Scan a new pairing code.'); this.sessions.delete(s.id); continue;
       }
       if (s.ready && now - s.lastHostAt > HOST_TIMEOUT_MS) this.suspend(s, 'Laptop stopped responding. Enable controls again.');
       else if (s.ready && now - s.lastInputAt > INPUT_TIMEOUT_MS) this.suspend(s, 'Controller input expired. Enable controls again.');
@@ -74,7 +77,7 @@ export class SessionRelay {
         if (msg.role === 'controller' && !s.host) { socket.close(4003, 'Open the simulator first'); return; }
         if (s[msg.role]) { socket.close(4003, `${msg.role === 'host' ? 'Simulator' : 'Controller'} already connected`); return; }
         clearTimeout(helloTimer); session = s; role = msg.role; s[role] = socket;
-        if (role === 'host') s.lastHostAt = this.now();
+        if (role === 'host') { s.lastHostAt = this.now(); s.hostDisconnectedAt = undefined; }
         s.generation++; s.ready = false; s.lastSeq = -1; s.actions.clear();
         this.send(socket, { type: 'welcome', role, generation: s.generation });
         this.notify(s, role === 'controller' ? 'Phone paired. Enable controls on the phone.' : 'Simulator connected.');
@@ -90,6 +93,7 @@ export class SessionRelay {
       clearTimeout(helloTimer);
       if (!session || !role || session[role] !== socket) return;
       session[role] = undefined;
+      if (role === 'host') session.hostDisconnectedAt = this.now();
       this.suspend(session, role === 'host' ? 'Simulator disconnected.' : 'Phone disconnected.');
     });
   }
@@ -108,7 +112,7 @@ export class SessionRelay {
   private fromController(s: Session, msg: ClientMessage): void {
     if (msg.type === 'resume' && msg.generation === s.generation && s.host && this.now() - s.lastHostAt <= HOST_TIMEOUT_MS) {
       s.generation++; s.ready = true; s.lastSeq = -1; s.lastInputAt = this.now(); s.actions.clear();
-      this.notify(s, 'Controls ready. Start practice on the laptop.'); return;
+      this.notify(s, 'Controls ready. Take off, or resume practice on the laptop.'); return;
     }
     if (!s.ready || !('generation' in msg) || msg.generation !== s.generation) return;
     if (this.now() - s.lastInputAt > INPUT_TIMEOUT_MS || this.now() - s.lastHostAt > HOST_TIMEOUT_MS) {

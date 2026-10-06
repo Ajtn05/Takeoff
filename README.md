@@ -1,4 +1,4 @@
-# Drone simulator
+# Takeoff - Drone simulator
 
 Practice camera-drone flight and photo composition on your laptop. Fly with the keyboard or use a phone as a two-stick controller with DJI Modes 1, 2, and 3. Mode 2 is the default. A hosted deployment supports wireless pairing over Wi-Fi or mobile data; the local version also supports Android USB and local Wi-Fi.
 

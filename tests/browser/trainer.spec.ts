@@ -181,8 +181,11 @@ test('hidden laptop pauses flight and camera-only mode stays usable', async ({ p
   await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'grounded');
 });
 
-test('workspace layouts resize, instruments move and preferences persist', async ({ page }) => {
+test('workspace layouts resize, instruments stay docked and preferences persist', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', (error) => errors.push(error.message));
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('trainer-workspace-v1')) localStorage.setItem('trainer-workspace-v1', JSON.stringify({ panelX: 1, panelY: 0 }));
+  });
   await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await expect(page.locator('.station-brand')).toHaveText('TAKEOFF');
   await expect(page.getByText('Paused', { exact: true })).toHaveCount(1);
@@ -205,11 +208,11 @@ test('workspace layouts resize, instruments move and preferences persist', async
   await expect(divider).toHaveAttribute('aria-valuenow', '47');
   const cameraBox = (await page.locator('#camera-view').boundingBox())!;
   expect(cameraBox.width / cameraBox.height).toBeCloseTo(16 / 9, 2);
-  const initialPanel = (await panel.boundingBox())!, handle = (await page.locator('#panel-handle').boundingBox())!;
-  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
-  await page.mouse.down(); await page.mouse.move(handle.x + handle.width / 2 + 160, handle.y + handle.height / 2 - 150); await page.mouse.up();
-  expect((await panel.boundingBox())!.x).toBeGreaterThan(initialPanel.x + 100);
-  expect((await panel.boundingBox())!.y).toBeLessThan(initialPanel.y - 100);
+  await expect(page.locator('#panel-handle')).toHaveCount(0);
+  const initialPanel = (await panel.boundingBox())!;
+  expect(initialPanel.x).toBeCloseTo(stageBox.x + 1, 0);
+  expect(initialPanel.width).toBeCloseTo(stageBox.width - 2, 0);
+  expect(initialPanel.y + initialPanel.height).toBeCloseTo(stageBox.y + stageBox.height - 1, 0);
   await page.locator('#panel-glass').click(); await expect(panel).not.toHaveClass(/is-glass/);
   await page.keyboard.press('Space'); await expect(panel).toHaveClass(/is-glass/);
   await expect(page.locator('#pause')).toHaveAttribute('aria-label', 'Start practice');
@@ -220,7 +223,9 @@ test('workspace layouts resize, instruments move and preferences persist', async
   await page.reload(); await expect(stage).toHaveAttribute('data-layout', 'split');
   await expect(divider).toHaveAttribute('aria-valuenow', '47');
   await expect(panel).not.toHaveClass(/is-glass/); await expect(page.locator('#flight-panel-body')).toBeHidden();
-  expect((await panel.boundingBox())!.x).toBeGreaterThan(initialPanel.x + 100);
+  expect((await panel.boundingBox())!.x).toBeCloseTo(initialPanel.x, 0);
+  const reloadedPanel = (await panel.boundingBox())!, reloadedStage = (await stage.boundingBox())!;
+  expect(reloadedPanel.y + reloadedPanel.height).toBeCloseTo(reloadedStage.y + reloadedStage.height - 1, 0);
   await page.locator('#panel-collapse').click();
   await page.getByRole('button', { name: 'Stacked', exact: true }).click(); await expect(stage).toHaveAttribute('data-layout', 'stacked');
   await expect(divider).toHaveAttribute('aria-orientation', 'horizontal');
@@ -234,7 +239,11 @@ test('workspace layouts resize, instruments move and preferences persist', async
   await expect(page.locator('#camera-view')).toBeVisible(); await expect(panel).toBeVisible();
   await page.locator('#pause').click(); await expect(page.locator('#flight-status')).toHaveAttribute('data-paused', 'true');
   await page.getByRole('button', { name: 'Classic', exact: true }).click();
-  await expect(page.locator('#camera-column #flight-panel')).toBeVisible(); await expect(page.locator('#panel-handle')).toBeDisabled();
+  await expect(page.locator('#camera-column #flight-panel')).toBeVisible();
+  const classicBackground = await panel.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await page.locator('#panel-glass').click();
+  expect(await panel.evaluate((element) => getComputedStyle(element).backgroundColor)).not.toBe(classicBackground);
+  await page.locator('#panel-glass').click();
   await page.setViewportSize({ width: 1920, height: 720 });
   await expect.poll(async () => {
     const instruments = (await panel.boundingBox())!, workspace = (await stage.boundingBox())!;
@@ -257,6 +266,8 @@ test('workspace layouts resize, instruments move and preferences persist', async
     await page.getByRole('combobox', { name: 'View layout', exact: true }).selectOption(layout);
     await expect(page.locator('#observer-view')).toBeVisible(); await expect(panel).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+    const instruments = (await panel.boundingBox())!, workspace = (await stage.boundingBox())!;
+    expect(instruments.y + instruments.height).toBeCloseTo(workspace.y + workspace.height - 1, 0);
   }
   await page.getByRole('combobox', { name: 'View layout', exact: true }).selectOption('camera');
   await expect(page.locator('#observer-view')).toBeHidden(); await expect(panel).toBeVisible();
@@ -315,7 +326,7 @@ test('fullscreen fills the window with flight views and restores desktop compone
     expect((await stage.boundingBox())!).toEqual({ x: 0, y: 0, width, height });
     await expect.poll(async () => {
       const instruments = (await panel.boundingBox())!, controls = (await page.locator('#flight-console').boundingBox())!;
-      return instruments.x >= 0 && instruments.y >= 0 && instruments.x + instruments.width <= width && instruments.y + instruments.height <= controls.y && controls.x >= 0 && controls.x + controls.width <= width && controls.y + controls.height <= height;
+      return instruments.x === 0 && instruments.y >= 0 && instruments.width === width && Math.abs(instruments.y + instruments.height - height) < 1 && controls.x >= 0 && controls.x + controls.width <= width && controls.y + controls.height < instruments.y;
     }).toBe(true);
     for (const id of ['takeoff', 'land', 'capture', 'reset', 'simulator-fullscreen']) {
       const button = (await page.locator(`#${id}`).boundingBox())!;
@@ -336,10 +347,12 @@ test('fullscreen fills the window with flight views and restores desktop compone
     expect((await stage.boundingBox())!).toEqual(workspace);
     if (layout === 'camera') { await expect(page.locator('#observer-view')).toBeHidden(); await expect(page.locator('#camera-view')).toBeVisible(); }
     else { expect((await page.locator('#observer-view').boundingBox())!).toEqual(workspace); }
-    await expect(page.locator('#panel-handle')).toBeEnabled();
+    await expect(page.locator('#panel-handle')).toHaveCount(0);
+    const instruments = (await panel.boundingBox())!;
+    expect(instruments.y + instruments.height).toBeCloseTo(workspace.height, 0);
     await page.locator('#simulator-fullscreen').click(); await expect(root).not.toHaveClass(/is-fullscreen/);
     await expect(stage).toHaveAttribute('data-layout', layout);
-    if (layout === 'classic') { await expect(page.locator('#camera-column #flight-panel')).toBeVisible(); await expect(page.locator('#panel-handle')).toBeDisabled(); }
+    if (layout === 'classic') await expect(page.locator('#camera-column #flight-panel')).toBeVisible();
   }
 });
 

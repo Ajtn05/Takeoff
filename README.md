@@ -4,7 +4,7 @@ Practice camera-drone flight and photo composition on your laptop. Fly with the 
 
 The observer view shows where the drone is going. The drone camera shows the resulting composition. Use both to learn how heading, movement, and camera tilt affect a shot, then switch to **Camera only** to practice framing without the observer view.
 
-![Takeoff flight station with adjustable observer and drone camera views and floating flight instruments](docs/images/workspace.png)
+![Takeoff flight station with adjustable observer and drone camera views and bottom flight instruments](docs/images/workspace.png)
 
 ## What you can practice
 
@@ -13,7 +13,7 @@ The observer view shows where the drone is going. The drone camera shows the res
 - **Photography:** tilt the stabilized camera, use the thirds grid, frame the orange sculpture, and download camera photos as PNGs.
 - **Coordinated movement:** use both phone sticks together for slow reveals and changes of viewpoint.
 - **Free flight:** take off, explore, reset a flight, and use fullscreen for more space.
-- **Flexible workspace:** choose camera-only, observer-only, adjustable side-by-side or stacked views, or the Classic sidebar. Move, collapse, and restyle the flight instruments; workspace preferences are saved locally.
+- **Flexible workspace:** choose camera-only, observer-only, adjustable side-by-side or stacked views, or the Classic sidebar. Collapse and restyle the bottom flight instruments; workspace preferences are saved locally.
 - **Campus photography:** choose Ateneo de Manila's Loyola Heights campus and start near one of ten landmarks, or explore the expanded 240 × 240 m practice park.
 - **Speed and terrain:** fly up to 20 m/s, choose slower 5 or 10 m/s limits for framing, and practice over the campus's modeled elevation.
 
@@ -191,7 +191,7 @@ Keyboard flight requires focus on the simulator, away from menus and sliders. Th
 | Campus trees | Show or hide the Ateneo acacias and their collisions. The setting is saved between visits. |
 | Side by side | Show both views with an adjustable divider. Drag the divider, or focus it and use arrow keys, to change the proportions. On narrow screens the views stack. |
 | Stacked | Arrange the observer above the camera with an adjustable horizontal divider. |
-| Camera only | Practice from the drone camera with floating flight instruments. |
+| Camera only | Practice from the drone camera with flight instruments fixed at the bottom. |
 | Observer only | Use the full workspace for the observer, with flight instruments and capture controls still available. |
 | Classic | Use the original observer and camera sidebar arrangement, with flight instruments docked below the camera. |
 | Fullscreen | Fill the window with flight views, compact instruments, and flight controls; restore the desktop workspace when you exit. |
@@ -205,7 +205,7 @@ Desktop controls use icons in separate modules with raised buttons and recessed 
 
 The layout icons select the viewing arrangement. **Equalize views** gives both views equal space; **Reset workspace** restores the default side-by-side layout and instrument settings. The drone camera keeps a 16:9 frame as the views resize, matching exported photos.
 
-The **Flight** instrument panel floats in all layouts except desktop Classic. Drag its title to place it anywhere inside the workspace, or focus the title and use arrow keys to move it (**Home** returns it to the lower left). The half-filled circle switches between a translucent glass display and an opaque panel; the chevron collapses or expands the instruments. A collapsed panel keeps live altitude, speed, and heading visible, while hiding gimbal and vertical-speed details. Layout, divider proportions, instrument position, transparency, and collapse state are saved in this browser. Instruments remain within the workspace when the window resizes or fullscreen changes.
+The **Flight** instrument panel is fixed to the bottom of the workspace; desktop Classic keeps it beneath the camera. In fullscreen, flight controls sit above the data strip. The half-filled circle switches between a translucent glass display and an opaque panel; the chevron collapses or expands the instruments. A collapsed panel keeps live altitude, speed, and heading visible, while hiding gimbal and vertical-speed details. Layout, divider proportions, transparency, and collapse state are saved in this browser. Instruments remain anchored when the window resizes or fullscreen changes.
 
 **Altitude · AGL** is height above the drone's resting position on the ground directly below it, **Ground speed** is horizontal speed, **Heading** is the drone's direction in degrees, and **Gimbal tilt** is the camera's vertical angle, from −90° to +20°. **V/S** shows vertical speed, positive while climbing. The altitude and speed scales show their values relative to the map ceiling and selected speed limit. Flying horizontally maintains world altitude, so clearance decreases over rising terrain. Takeoff climbs 3 m above the launch point; landing follows the local terrain.
 
@@ -278,7 +278,7 @@ npm run build
 npm run test:browser
 ```
 
-Unit and WebSocket integration tests cover flight behavior, map boundaries, campus launch clearance, polygon collisions, stale input, controller ownership, reconnection, revocation, action deduplication, and USB forwarding. Browser tests use installed Google Chrome by default and start a production server on port **8081**; build first and keep that port free. They cover map/spot switching, photo preservation, direct keyboard and phone takeoff, takeoff readiness after pauses and resets, all workspace layouts, divider resizing, instrument movement and saved preferences, keyboard operation of panel controls, fullscreen, narrow and short windows, PNG export, simultaneous touch input, release/cancellation, and disconnect/background pauses.
+Unit and WebSocket integration tests cover flight behavior, map boundaries, campus launch clearance, polygon collisions, stale input, controller ownership, reconnection, revocation, action deduplication, and USB forwarding. Browser tests use installed Google Chrome by default and start a production server on port **8081**; build first and keep that port free. They cover map/spot switching, photo preservation, direct keyboard and phone takeoff, takeoff readiness after pauses and resets, all workspace layouts, divider resizing, bottom instrument placement and saved preferences, keyboard operation of panel controls, fullscreen, narrow and short windows, PNG export, simultaneous touch input, release/cancellation, and disconnect/background pauses.
 
 To use Playwright's Chromium instead:
 

@@ -24,7 +24,6 @@ const paths = {
   contrast: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/>',
   collapse: '<path d="m6 15 6-6 6 6"/>',
   expand: '<path d="m6 9 6 6 6-6"/>',
-  grip: '<g fill="currentColor" stroke="none"><circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/></g>',
   warning: '<path d="m12 3 10 18H2Z"/><path d="M12 9v5m0 3v1"/>',
   frame: '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><circle cx="12" cy="12" r="3"/>',
 } as const;

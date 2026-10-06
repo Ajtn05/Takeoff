@@ -1,6 +1,6 @@
 # Takeoff UI design
 
-Takeoff is a flight and photography simulator. Its identity should come from the observer view, camera composition, flight instruments, and controller workflow. The desktop header stays limited to its logo and title. Preserve adjustable layouts, floating instruments, the optional glass surface, and compact icon controls.
+Takeoff is a flight and photography simulator. Its identity should come from the observer view, camera composition, flight instruments, and controller workflow. The desktop header stays limited to its logo and title. Preserve adjustable layouts, the fixed bottom instrument panel, its optional glass surface, and compact icon controls. Flight data has no drag handle or position settings; Classic docks it beneath the camera, and fullscreen keeps flight actions above the bottom strip.
 
 The controls should feel like cockpit or amplifier components: distinct control banks, raised keys, restrained faceplate gradients, and recessed numeric displays. Use these details to show grouping, depth, and interaction. Add no visible group labels merely to explain the styling. Fullscreen is a flight workspace: hide desktop setup and branding, fill the window with the observer and camera views, and retain compact instruments and flight actions. A collapsed instrument panel continues to show altitude, speed, and heading. Collision recovery has a persistent reset prompt in both modes.
 
@@ -18,7 +18,7 @@ Our review of Takeoff identified small text, blue tint across nearly every surfa
 | Accent color applied everywhere | Use neutral graphite surfaces. Cyan identifies selected controls, focus, and the primary action; amber and red indicate actual flight states. |
 | Tiny labels and tracked capitals used to suggest technical depth | Use readable sans-serif labels. Keep monospace and tabular numerals for telemetry and performance measurements. |
 | Decorative HUD furniture | Retain the composition grid, center mark, and framing feedback. Avoid corner brackets, fake scan lines, ornamental gauges, and invented station identifiers. |
-| Decorative effects without a functional role | Confine glass to flight instruments. Use dark backing for legibility, subtle neutral bevels to identify controls, and shadows to separate movable panels. |
+| Decorative effects without a functional role | Confine glass to flight instruments. Use dark backing for legibility, subtle neutral bevels to identify controls, and borders and shadows to separate components. |
 | Icons that require guesswork | Use consistent SVG icons, accessible names, keyboard focus, and descriptive context. Keep flight state, connection state, units, and menu values visible. |
 | A polished screenshot with incomplete behavior | Check resizing, fullscreen, keyboard use, touch input, disabled actions, disconnection, and real photo export. |
 

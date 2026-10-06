@@ -2,7 +2,7 @@
 
 **Fly the route. Find the shot.**
 
-Takeoff is a browser-based drone simulator that turns your laptop into a flight playground and camera practice station.Made to assist photographers of the Ateneo Resident Students Association (ARSA) in learning how to fly drones for documentation work. Thread a hoop slalom, follow a rally car through a hairpin, or find a new angle on Ateneo's campus. Fly with your keyboard or turn your phone into a two-stick controller, then bring home the shot as a PNG.
+Takeoff is a browser-based drone simulator that turns your laptop into a flight playground and camera practice station. Made to assist photographers of the Ateneo Resident Students Association (ARSA) in learning how to fly drones for documentation work. Thread a hoop slalom, follow a rally car through a hairpin, or find a new angle on Ateneo's campus. Fly with your keyboard or turn your phone into a two-stick controller, then bring home the shot as a PNG.
 
 [Play Takeoff](https://takeoff-0qrz.onrender.com/) · [Start flying locally](#get-started) · [Explore the maps](#choose-your-next-flight) · [Pair a phone](#pair-an-android-phone) · [Host your own](docs/HOSTING.md)
 

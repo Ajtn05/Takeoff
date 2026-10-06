@@ -1,7 +1,8 @@
 import { CatmullRomCurve3, Vector3 } from 'three';
-import type { FlightBounds, Obstacle } from './simulation';
+import { FLIGHT_CEILING, type FlightBounds, type Obstacle } from './simulation';
+import type { RaceCar, RaceCircuit } from './circuit';
 
-export const RALLY_BOUNDS: FlightBounds = { minX: -170, maxX: 170, minZ: -140, maxZ: 140, ceiling: 60 };
+export const RALLY_BOUNDS: FlightBounds = { minX: -170, maxX: 170, minZ: -140, maxZ: 140, ceiling: FLIGHT_CEILING };
 export const RALLY_PAD = { x: -15, z: 108 };
 export const RALLY_ROAD_WIDTH = 9;
 // Collision envelope includes protruding tyres, bumpers, and the roof.
@@ -37,14 +38,21 @@ export function rallyPose(distance: number): RallyPose {
     lap: Math.floor(Math.max(0, distance) / RALLY_LENGTH) + 1 };
 }
 
+export const RALLY_CIRCUIT: RaceCircuit = { path: RALLY_PATH, length: RALLY_LENGTH, pose: rallyPose,
+  roadWidth: RALLY_ROAD_WIDTH, car: RALLY_CAR, carName: 'rally car' };
+
 export interface RallySession {
   distance: number; flyingTime: number; framedTime: number; streak: number; bestStreak: number;
 }
 export const initialRallySession = (): RallySession => ({ distance: 0, flyingTime: 0, framedTime: 0, streak: 0, bestStreak: 0 });
-export function advanceRally(session: RallySession, dt: number): void {
+export function advanceRally(session: RallySession, dt: number, pose = rallyPose): void {
   if (dt <= 0 || dt > 0.05) return;
-  const middle = session.distance + rallyPose(session.distance).speed * dt / 2;
-  session.distance += rallyPose(middle).speed * dt;
+  // Short integration steps also preserve timing through fast F1 corner transitions.
+  const steps = Math.ceil(dt * 120), step = dt / steps;
+  for (let i = 0; i < steps; i++) {
+    const middle = session.distance + pose(session.distance).speed * step / 2;
+    session.distance += pose(middle).speed * step;
+  }
 }
 export function recordTracking(session: RallySession, dt: number, framed: boolean): void {
   if (dt <= 0) return;
@@ -54,15 +62,15 @@ export function recordTracking(session: RallySession, dt: number, framed: boolea
   session.bestStreak = Math.max(session.bestStreak, session.streak);
 }
 
-export function rallyCarObstacle(pose: RallyPose): Obstacle {
+export function rallyCarObstacle(pose: RallyPose, car: RaceCar = RALLY_CAR, name = 'rally car'): Obstacle {
   const c = Math.cos(pose.heading), s = Math.sin(pose.heading);
-  const hx = (RALLY_CAR.width * Math.abs(c) + RALLY_CAR.length * Math.abs(s)) / 2;
-  const hz = (RALLY_CAR.width * Math.abs(s) + RALLY_CAR.length * Math.abs(c)) / 2;
-  return { name: 'rally car', min: [pose.x - hx, 0, pose.z - hz], max: [pose.x + hx, RALLY_CAR.height, pose.z + hz],
+  const hx = (car.width * Math.abs(c) + car.length * Math.abs(s)) / 2;
+  const hz = (car.width * Math.abs(s) + car.length * Math.abs(c)) / 2;
+  return { name, min: [pose.x - hx, 0, pose.z - hz], max: [pose.x + hx, car.height, pose.z + hz],
     intersects: (x, y, z, radius, halfHeight) => {
       const dx = x - pose.x, dz = z - pose.z;
-      const right = Math.max(0, Math.abs(dx * c + dz * s) - RALLY_CAR.width / 2);
-      const depth = Math.max(0, Math.abs(-dx * s + dz * c) - RALLY_CAR.length / 2);
-      return Math.hypot(right, depth) < radius && y - halfHeight < RALLY_CAR.height && y + halfHeight > 0;
+      const right = Math.max(0, Math.abs(dx * c + dz * s) - car.width / 2);
+      const depth = Math.max(0, Math.abs(-dx * s + dz * c) - car.length / 2);
+      return Math.hypot(right, depth) < radius && y - halfHeight < car.height && y + halfHeight > 0;
     } };
 }

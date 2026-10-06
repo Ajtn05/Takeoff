@@ -9,7 +9,9 @@ import { createDrone } from './drone';
 import { campusRoadWidth } from './vegetation';
 import { campusMaterial } from './campus-materials';
 import { PRACTICE_COURSES } from './practice';
-import { RALLY_CAR, RALLY_LENGTH, RALLY_PATH, RALLY_ROAD_WIDTH, rallyPose } from './rally';
+import { RALLY_CAR, RALLY_LENGTH, RALLY_ROAD_WIDTH, rallyPose } from './rally';
+import { SILVERSTONE_CIRCUIT, SILVERSTONE_CORNERS, SILVERSTONE_STRUCTURES, silverstonePoint } from './silverstone';
+import type { RaceCircuit } from './circuit';
 
 export class TrainingWorld {
   readonly scene = new THREE.Scene();
@@ -162,14 +164,17 @@ export class TrainingWorld {
       }
     });
     this.environment.clear(); this.courseMarkers.clear(); this.forest = undefined; this.subject = new THREE.Group(); this.map = map; this.spot = spot;
-    this.rallyWheels = []; this.rallyDust = undefined; this.rallyDistance = map.id === 'rally' ? NaN : 0;
+    this.rallyWheels = []; this.rallyDust = undefined; this.rallyDistance = map.circuit ? NaN : 0;
     this.framingPose = []; this.shadowPose = []; this.aidPosition.set(NaN, NaN, NaN);
     this.renderer.shadowMap.needsUpdate = true;
     this.target.set(...spot.target); this.resetTrail();
     const campus = map.id === 'ateneo';
     this.renderer.domElement.setAttribute('aria-label', `${map.name} rendered from the observer and drone cameras`);
-    this.scene.fog = new THREE.Fog('#bdd8ec', campus ? 900 : 200, campus ? 2800 : 700);
-    if (campus) this.buildCampus(); else if (map.id === 'rally') this.buildRally(); else this.buildPark();
+    const silverstone = map.id === 'silverstone';
+    this.scene.fog = new THREE.Fog('#bdd8ec', silverstone ? 2400 : campus ? 900 : 400, silverstone ? 6500 : campus ? 2800 : 1500);
+    this.camera.far = silverstone ? 8000 : 2500; this.camera.updateProjectionMatrix();
+    this.observer.far = silverstone ? 16000 : 3000; this.observer.updateProjectionMatrix();
+    if (campus) this.buildCampus(); else if (silverstone) this.buildSilverstone(); else if (map.id === 'rally') this.buildRally(); else this.buildPark();
     this.buildPracticeAids();
     const base = map.ground(spot.pad.x, spot.pad.z);
     this.sun.position.set(spot.pad.x - 60, base + 100, spot.pad.z + 45);
@@ -196,6 +201,8 @@ export class TrainingWorld {
       this.fixedTarget.set(...target);
     } else if (this.map.id === 'rally') {
       this.fixedPosition.set(0, 290, 220); this.fixedTarget.set(0, 0, 0);
+    } else if (this.map.id === 'silverstone') {
+      this.fixedPosition.set(pad.x + 70, 85, pad.z + 105); this.fixedTarget.set(...target);
     } else if (courseId) {
       this.fixedPosition.set(pad.x + 18, 20, pad.z + 22); this.fixedTarget.set(...target);
     } else { this.fixedPosition.set(27, 24, 34); this.fixedTarget.set(0, 1, -5); }
@@ -208,10 +215,10 @@ export class TrainingWorld {
     this.camera.updateProjectionMatrix(); this.aidCamera.updateProjectionMatrix();
     this.aidPosition.set(NaN, NaN, NaN); this.framingPose = [];
   }
-  private rallyRibbon(width: number, offset = 0): THREE.BufferGeometry {
+  private rallyRibbon(width: number, offset = 0, circuit: RaceCircuit = this.map.circuit!, start = 0, end = circuit.path.length - 1): THREE.BufferGeometry {
     const positions: number[] = [], indices: number[] = [];
-    RALLY_PATH.forEach((point, i) => {
-      const pose = rallyPose(i / (RALLY_PATH.length - 1) * RALLY_LENGTH);
+    circuit.path.slice(start, end + 1).forEach((point, i) => {
+      const pose = circuit.pose((start + i) / (circuit.path.length - 1) * circuit.length);
       for (const side of [-1, 1]) {
         const right = offset + side * width / 2;
         positions.push(point.x + Math.cos(pose.heading) * right, 0, point.z + Math.sin(pose.heading) * right);
@@ -221,6 +228,106 @@ export class TrainingWorld {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geometry.setIndex(indices);
     geometry.computeVertexNormals(); return geometry;
+  }
+  private buildSilverstone(): void {
+    const circuit = SILVERSTONE_CIRCUIT, b = this.map.bounds;
+    const ground = this.mesh(new THREE.PlaneGeometry(b.maxX - b.minX, b.maxZ - b.minZ), '#76985b',
+      [(b.minX + b.maxX) / 2, -0.04, (b.minZ + b.maxZ) / 2]);
+    ground.rotation.x = -Math.PI / 2; ground.castShadow = false;
+    const surface = (width: number, offset: number, height: number, color: string) => {
+      const road = this.mesh(this.rallyRibbon(width, offset), color, [0, height, 0]); road.castShadow = false;
+    };
+    surface(36, 0, 0.01, '#baa98c'); // Gravel runoff
+    surface(23, 0, 0.02, '#397a68'); // Painted runoff
+    surface(circuit.roadWidth, 0, 0.035, '#363c42');
+    for (const side of [-1, 1]) {
+      surface(0.18, side * (circuit.roadWidth / 2 - 0.18), 0.045, '#eaece1');
+      surface(1.25, side * (circuit.roadWidth / 2 + 0.63), 0.05, '#edece2');
+      const sections: THREE.BufferGeometry[] = [], step = 4;
+      for (let i = 0; i < circuit.path.length - 1; i += step * 2) {
+        sections.push(this.rallyRibbon(1.25, side * (circuit.roadWidth / 2 + 0.63), circuit, i, Math.min(i + step, circuit.path.length - 1)));
+      }
+      const curbs = this.mesh(mergeGeometries(sections), '#cf3b36', [0, 0.055, 0]); curbs.castShadow = false;
+      sections.forEach(geometry => geometry.dispose());
+    }
+    const start = circuit.pose(0);
+    for (let row = 0; row < 2; row++) for (let col = 0; col < 20; col++) {
+      const right = (col - 9.5) * 0.75, forward = (row - 0.5) * 0.75;
+      const square = this.box([0.75, 0.015, 0.75], (row + col) % 2 ? '#f5f4ec' : '#1b2227',
+        [start.x + Math.cos(start.heading) * right + Math.sin(start.heading) * forward, 0.065,
+          start.z + Math.sin(start.heading) * right - Math.cos(start.heading) * forward]);
+      square.rotation.y = -start.heading; square.castShadow = false;
+    }
+    // The pit lane runs beside Hamilton Straight, with garages on its inside.
+    const [pitX, pitZ] = silverstonePoint(975, 920);
+    const pitLane = this.box([380, 0.03, 9], '#4d555a', [pitX, 0.01, pitZ]); pitLane.rotation.y = -0.60; pitLane.castShadow = false;
+    for (const structure of SILVERSTONE_STRUCTURES) {
+      const [x, z] = structure.point, [w, h, d] = structure.size;
+      const group = new THREE.Group(); group.position.set(x, 0, z); group.rotation.y = -structure.heading; this.environment.add(group);
+      this.box([w, h, d], structure.color, [0, h / 2, 0], group);
+      this.box([w + 2, 0.4, d + 2], '#c8cdd0', [0, h + 0.2, 0], group);
+      if (structure.name === 'Silverstone Wing') {
+        this.box([w - 4, 3, 0.1], '#46616c', [0, h - 3, d / 2 + 0.06], group);
+        for (let door = -w / 2 + 10; door < w / 2; door += 14) {
+          this.box([10, 4, 0.1], '#353f45', [door, 2.2, d / 2 + 0.06], group);
+        }
+      } else {
+        for (let tier = 0; tier < 7; tier++) {
+          this.box([w - 4, 0.18, 0.8], '#b0c6d1', [0, h - 1 - tier * 0.9, -d / 2 - 0.12], group);
+        }
+      }
+      this.label(structure.name.toUpperCase(), [x, h + 6, z], Math.min(w, 75));
+    }
+    for (const [name, x, z] of SILVERSTONE_CORNERS) {
+      const [px, pz] = silverstonePoint(x, z);
+      this.label(name, [px, 12, pz], 70);
+    }
+    for (const [name, x, z] of [['SILVERSTONE · GP CIRCUIT', 1070, 730], ['HANGAR STRAIGHT', 1180, 535],
+      ['WELLINGTON STRAIGHT', 505, 550], ['HAMILTON STRAIGHT', 975, 1030]] as const) {
+      const [px, pz] = silverstonePoint(x, z); this.label(name, [px, 5, pz], 130);
+    }
+    this.buildFormulaCar();
+    this.batchStaticMeshes(this.environment); this.updateRally(0);
+  }
+  private buildFormulaCar(): void {
+    this.environment.add(this.subject);
+    const red = '#e63830', carbon = '#20272c';
+    this.box([1.45, 0.1, 3.65], carbon, [0, 0.2, 0.15], this.subject);
+    this.box([0.72, 0.43, 2.15], red, [0, 0.54, 0.58], this.subject);
+    const nose = this.mesh(new THREE.CylinderGeometry(0.10, 0.34, 1.9, 4), red, [0, 0.43, -1.45], this.subject);
+    nose.rotation.x = -Math.PI / 2; nose.rotation.z = Math.PI / 4;
+    for (const side of [-1, 1]) {
+      this.box([0.43, 0.36, 1.8], red, [side * 0.55, 0.4, 0.5], this.subject);
+      this.box([0.3, 0.18, 0.05], carbon, [side * 0.53, 0.48, -0.42], this.subject);
+      for (const z of [-1.68, 1.65]) {
+        const arm = this.box([0.72, 0.035, 0.07], carbon, [side * 0.5, 0.39, z + 0.15], this.subject);
+        arm.rotation.y = side * 0.25;
+        const wheel = new THREE.Group(); wheel.position.set(side * 0.80, 0.36, z); this.subject.add(wheel);
+        const tyre = this.mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.40, 24), '#14191c', [0, 0, 0], wheel);
+        tyre.rotation.z = Math.PI / 2;
+        const hub = this.mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.405, 16), '#545d64', [0, 0, 0], wheel);
+        hub.rotation.z = Math.PI / 2;
+        const stripe = this.mesh(new THREE.TorusGeometry(0.29, 0.012, 6, 32), '#eac646', [side * 0.205, 0, 0], wheel);
+        stripe.rotation.y = Math.PI / 2;
+        this.rallyWheels.push(wheel); this.batchStaticMeshes(wheel);
+      }
+    }
+    for (const z of [-2.58, -2.36]) this.box([1.94, 0.06, 0.23], carbon, [0, 0.23, z], this.subject);
+    for (const side of [-1, 1]) {
+      this.box([0.06, 0.25, 0.5], red, [side * 0.95, 0.30, -2.48], this.subject);
+      this.box([0.07, 0.34, 0.55], red, [side * 0.85, 0.95, 2.37], this.subject);
+    }
+    this.box([0.12, 0.56, 0.22], carbon, [0, 0.68, 2.18], this.subject);
+    this.box([1.76, 0.10, 0.53], red, [0, 1.04, 2.37], this.subject);
+    this.box([1.4, 0.014, 0.18], '#f1ede7', [0, 1.098, 2.37], this.subject);
+    const cockpit = this.mesh(new THREE.CylinderGeometry(0.28, 0.24, 0.05, 24), carbon, [0, 0.78, -0.05], this.subject);
+    cockpit.scale.z = 1.5;
+    this.mesh(new THREE.SphereGeometry(0.16, 16, 12), '#f5d360', [0, 0.89, 0.02], this.subject);
+    const halo = this.mesh(new THREE.TorusGeometry(0.34, 0.03, 8, 32), carbon, [0, 1.06, -0.10], this.subject);
+    halo.rotation.x = Math.PI / 2; halo.scale.y = 1.3;
+    this.box([0.04, 0.27, 0.06], carbon, [0, 0.93, -0.53], this.subject);
+    this.box([0.35, 0.015, 0.5], '#f1ede7', [0, 0.55, -1.65], this.subject);
+    this.batchStaticMeshes(this.subject);
   }
   private buildRally(): void {
     const ground = this.mesh(new THREE.PlaneGeometry(340, 280), '#87966d', [0, -0.04, 0]);
@@ -285,12 +392,13 @@ export class TrainingWorld {
     this.updateRally(0);
   }
   updateRally(distance: number): void {
-    if (this.map.id !== 'rally' || distance === this.rallyDistance) return;
-    const pose = rallyPose(distance);
+    const circuit = this.map.circuit;
+    if (!circuit || distance === this.rallyDistance) return;
+    const pose = circuit.pose(distance);
     this.rallyDistance = distance;
     this.subject.position.set(pose.x, 0, pose.z); this.subject.rotation.y = -pose.heading;
-    this.rallyWheels.forEach(wheel => wheel.rotation.x = -distance / RALLY_CAR.wheelRadius);
-    this.target.set(pose.x, 0.95, pose.z);
+    this.rallyWheels.forEach(wheel => wheel.rotation.x = -distance / circuit.car.wheelRadius);
+    this.target.set(pose.x, this.map.id === 'silverstone' ? 0.6 : 0.95, pose.z);
     this.subject.updateMatrixWorld(true);
     this.framingPose = []; this.aidPosition.set(NaN, NaN, NaN);
     if (this.rallyDust) {
@@ -409,7 +517,7 @@ export class TrainingWorld {
       this.box([0.08, 0.004, 1.1], '#e4d9ba', [x + 0.35, base + 0.005, z]);
       this.box([0.7, 0.004, 0.08], '#e4d9ba', [x, base + 0.005, z]);
     }
-    if (!this.spot.courseId && this.map.id !== 'rally') {
+    if (!this.spot.courseId && !this.map.circuit) {
       const markerPosition = translationMarker(this.spot, this.map.ground);
       const marker = this.mesh(new THREE.TorusGeometry(1, 0.055, 8, 40), '#e6b95c', markerPosition);
       marker.layers.set(2); this.label('02  ·  TRANSLATE', [markerPosition[0], markerPosition[1] + 2, markerPosition[2]]);
@@ -524,9 +632,17 @@ export class TrainingWorld {
       this.observer.lookAt(s.x, s.y, s.z);
     } else if (this.overview) {
       const b = this.map.bounds;
-      const distance = Math.max(b.maxZ - b.minZ, (b.maxX - b.minX) / this.observer.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(this.observer.fov / 2))) * 1.12;
-      this.observer.position.set((b.minX + b.maxX) / 2, distance, (b.minZ + b.maxZ) / 2 + 0.01);
-      this.observer.position.y += this.map.ground(0, 0); this.observer.lookAt((b.minX + b.maxX) / 2, this.map.ground(0, 0), (b.minZ + b.maxZ) / 2);
+      // Fit the complete map above instruments that cover the bottom of this view.
+      const view = this.observerView.getBoundingClientRect();
+      const panel = this.stage.querySelector<HTMLElement>('#flight-panel')!.getBoundingClientRect();
+      const height = Math.max(1, view.height), width = Math.max(1, view.width);
+      const covered = panel.right > view.left && panel.left < view.right
+        ? THREE.MathUtils.clamp(view.bottom - Math.max(view.top, panel.top), 0, height * 0.75) : 0;
+      const available = height - covered, tangent = Math.tan(THREE.MathUtils.degToRad(this.observer.fov / 2));
+      const distance = Math.max(b.maxZ - b.minZ, (b.maxX - b.minX) / (width / available)) / (2 * tangent) * 1.12 * height / available;
+      const x = (b.minX + b.maxX) / 2, z = (b.minZ + b.maxZ) / 2 + distance * tangent * covered / height;
+      const ground = this.map.ground(0, 0);
+      this.observer.position.set(x, distance + ground, z + 0.01); this.observer.lookAt(x, ground, z);
     } else this.observerControls.update();
     this.frustum.visible = this.direction.visible = this.trail.visible = this.aids;
     this.droneMarker.visible = this.aids && s.mode !== 'grounded';

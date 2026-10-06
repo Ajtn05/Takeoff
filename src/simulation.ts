@@ -19,7 +19,8 @@ export interface Obstacle {
   intersects?: (x: number, y: number, z: number, radius: number, halfHeight: number) => boolean;
 }
 export interface FlightBounds { minX: number; maxX: number; minZ: number; maxZ: number; ceiling: number; footprint?: MapPoint[] }
-export const PRACTICE_BOUNDS: FlightBounds = { minX: -120, maxX: 120, minZ: -120, maxZ: 120, ceiling: 60 };
+export const FLIGHT_CEILING = 300;
+export const PRACTICE_BOUNDS: FlightBounds = { minX: -120, maxX: 120, minZ: -120, maxZ: 120, ceiling: FLIGHT_CEILING };
 export const OBSTACLES: Obstacle[] = [
   { name: 'studio building', min: [-19, 0, -19], max: [-9, 7, -7] },
   { name: 'photo sculpture', min: [-1.3, 0, -14.3], max: [1.3, 5.3, -11.7] },

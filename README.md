@@ -14,7 +14,7 @@ The observer view shows where the drone is going. The drone camera shows the res
 - **Coordinated movement:** use both phone sticks together for slow reveals and changes of viewpoint.
 - **Free flight:** take off, explore, reset a flight, and use fullscreen for more space.
 - **Obstacle routes:** follow a rising hoop slalom, thread progressively smaller wall gaps, or negotiate a covered corridor with two tight turns and a low beam. Numbered gates track your progress.
-- **Moving-subject tracking:** follow a rally car around a gravel circuit with fast straights, S bends, and hairpins. Practice yaw and camera tilt with live time-in-frame and tracking-streak feedback.
+- **Moving-subject tracking:** follow a rally car around a gravel circuit or frame a Formula One car around Silverstone's Grand Prix layout. Practice yaw and camera tilt with live time-in-frame and tracking-streak feedback.
 - **Flexible workspace:** choose camera-only, observer-only, adjustable side-by-side or stacked views, or the Classic sidebar. Collapse and restyle the bottom flight instruments; workspace preferences are saved locally.
 - **In-app guide:** the labeled **Guide** button covers startup, keyboard and phone controls, connections, and workspace layout, including in fullscreen.
 - **Adjustable observer:** orbit, pan, and zoom the fixed viewpoint, then return to it after using Follow or Overview.
@@ -234,7 +234,7 @@ The **Flight** instrument panel is fixed to the bottom of the workspace; desktop
 
 ### Practice maps
 
-Use **Map** above the views to choose **Practice park**, **Rally circuit · Tracking**, or **Ateneo de Manila · Loyola Heights**. The park has a **240 × 240 m** flight area and a **60 m** simulator ceiling. The rally stage has a **340 × 280 m** flight area and the same **60 m** ceiling. The campus follows its mapped boundary, approximately **930 × 1,590 m**, with an **80 m** simulator ceiling.
+Use **Map** above the views to choose **Practice park**, **Rally circuit · Tracking**, **Silverstone · Formula One**, or **Ateneo de Manila · Loyola Heights**. All maps have a **300 m** simulator ceiling. The park has a **240 × 240 m** flight area and the rally stage has a **340 × 280 m** flight area. Silverstone has an approximate full-size **5.891 km** GP lap. The campus follows its mapped boundary, approximately **930 × 1,590 m**.
 
 In the park, the route menu offers **Sculpture plaza** for free flight and three obstacle courses:
 
@@ -249,6 +249,8 @@ Choose a route to start at its entrance, then select **Take off**. Start with th
 ![Hoop slalom with numbered gates and route progress](docs/images/practice-routes.png)
 
 Choose **Rally circuit · Tracking** to practice keeping a moving subject in frame. An orange rally car follows a closed gravel circuit at **10–22 m/s (36–79 km/h)**, slowing for hairpins and accelerating along the straights. The car starts when the drone finishes taking off. Climb to **10–20 m** for a wider view, then use movement, yaw, and camera tilt to frame it; a **20 m/s** flight limit helps when following it. The tracking panel shows the current lap and car speed, the percentage of airborne practice time the car is in frame, and the current and best uninterrupted framing streaks. Framing uses the visible car as its subject and checks for occlusion. The car is a collision obstacle. Pausing freezes its position and statistics; landing stops it, and **Reset flight** resets the car, drone, and tracking statistics. Camera-only, fullscreen, phone controls, and photo capture also work in this stage.
+
+Choose **Silverstone · Formula One** for a red open-wheel car with slick tires, front and rear wings, a cockpit and halo. The asphalt circuit includes red and white curbs, runoff, the pit lane, an illustrative Silverstone Wing, grandstands, and labels covering the 18 GP corners. The centreline is approximated from [Silverstone's published circuit map](https://www.silverstone.co.uk/sites/default/files/pdf/British%20Grand%20Prix%202025%20Map.pdf) and uniformly scaled to the [FIA's 5.891 km circuit length](https://www.fia.com/system/files/decision-document/2025_silverstone_event_-_circuit_map_-_silverstone_2025.pdf); corner radii, scenery, and the **30–85 m/s (108–306 km/h)** speed profile are illustrative. Launch beside Hamilton Straight. Use **Map overview** to learn the route, then climb for a wide view and anticipate each pass: the car runs faster than the drone. Tracking feedback, pausing, reset, phone controls and photo capture work as in the rally stage. The car and modeled structures are collision obstacles.
 
 On the campus, **Photo spot** provides launch pads near the **Church of the Gesù, Areté, Rizal Library, Blue Eagle Gym, Manila Observatory, Science Education Complex, Horacio de la Costa Hall, Ricardo & Rosita Leong Hall, JG School of Management, and International Residence Halls**. Launch placement checks for an open view of the selected building from a 3 m hover. Pads and the amber exercise markers are simulator additions. Switching maps or spots pauses and resets the flight; existing photos remain in the gallery. Phone control must be enabled again after a location change. Reset returns to the selected spot.
 

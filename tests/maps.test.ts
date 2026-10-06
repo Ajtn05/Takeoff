@@ -12,6 +12,7 @@ test('campus launches remain within the real boundary and clear every mapped bui
   globalThis.fetch = async (input) => new Response(String(input).includes('elevation') ? elevation : data);
   try {
     const map = await loadCampus();
+    assert.equal(map.bounds.ceiling, 300);
     assert.equal(map.spots.length, 10);
     assert.ok(map.obstacles.length > 100);
     assert.equal(flightObstacles(map,true),map.obstacles);

@@ -5,13 +5,13 @@ import { initialState, stepFlight, takeoff, land, GROUND_HEIGHT } from './simula
 import { TrainerSocket } from './socket';
 import { TrainingWorld } from './world';
 import { bindFullscreen } from './fullscreen';
-import { flightObstacles, loadCampus, PRACTICE_MAP, RALLY_MAP, type TrainingMap } from './maps';
+import { flightObstacles, loadCampus, PRACTICE_MAP, RALLY_MAP, SILVERSTONE_MAP, type TrainingMap } from './maps';
 import { bindWorkspace } from './workspace';
 import { icon, setIconButton, type IconName } from './icons';
 import { advanceCourse, PRACTICE_COURSES } from './practice';
 import { assistanceDialogs, bindAssistance } from './assistance';
 import { defaultDroneSettings, parseDroneSettings, PROFILE_STORAGE_KEY, DRONE_PRESETS, type DroneSettings } from './profiles';
-import { advanceRally, initialRallySession, rallyCarObstacle, rallyPose, recordTracking, type RallySession } from './rally';
+import { advanceRally, initialRallySession, rallyCarObstacle, recordTracking, type RallySession } from './rally';
 import './workspace.css';
 
 const iconControl = (id: string, name: IconName, label: string, attributes = '', hint = label, classes = 'button quiet icon-control') =>
@@ -39,11 +39,11 @@ export async function mount(app: HTMLElement): Promise<void> {
         </div>
       </header>
       <section class="map-strip" aria-label="Practice location">
-        <label class="map-choice" title="Practice location">${icon('map')}<select id="map" aria-label="Choose a map"><option value="park">Practice park</option><option value="rally">Rally circuit · Tracking</option><option value="ateneo">Ateneo de Manila · Loyola Heights</option></select></label>
+        <label class="map-choice" title="Practice location">${icon('map')}<select id="map" aria-label="Choose a map"><option value="park">Practice park</option><option value="rally">Rally circuit · Tracking</option><option value="silverstone">Silverstone · Formula One</option><option value="ateneo">Ateneo de Manila · Loyola Heights</option></select></label>
         <label id="spot-control" class="map-choice" title="Practice route">${icon('pin')}<select id="photo-spot" aria-label="Choose a practice route"></select></label>
         <label class="map-choice" title="Flight speed limit">${icon('speed')}<select id="flight-speed" aria-label="Flight speed limit"><option value="5">5 m/s</option><option value="10">10 m/s</option><option value="20" selected>20 m/s</option></select></label>
-        ${iconControl('map-tip', 'info', 'Location information', '', 'Choose a park obstacle route, or the Rally circuit map to track a moving car. 240 × 240 m · 60 m ceiling')}
-        <span id="map-boundary" class="sr-only">240 × 240 m · 60 m ceiling</span>
+        ${iconControl('map-tip', 'info', 'Location information', '', `Choose an obstacle route, Rally tracking, or Silverstone Formula One tracking. 240 × 240 m · ${PRACTICE_MAP.bounds.ceiling} m ceiling`)}
+        <span id="map-boundary" class="sr-only">240 × 240 m · ${PRACTICE_MAP.bounds.ceiling} m ceiling</span>
       </section>
       <section class="workspace-bar" aria-label="Workspace layout">
         <div class="layout-presets control-module" role="group" aria-label="View layout">
@@ -68,6 +68,7 @@ export async function mount(app: HTMLElement): Promise<void> {
       <section id="flight-console" class="flight-strip"><div class="flight-actions control-module" role="group" aria-label="Flight actions">${iconControl('takeoff', 'takeoff', 'Take off', 'disabled', 'Take off · T')}${iconControl('land', 'land', 'Land', 'disabled', 'Land · L')}<span class="action-divider"></span>${iconControl('capture', 'camera', 'Capture photo', 'disabled', 'Capture photo · C', 'button shutter icon-control')}</div><div class="view-options control-module" role="group" aria-label="Display options">${iconControl('aids', 'aids', 'Observer aids', 'aria-pressed="true"')}${iconControl('grid', 'grid', 'Thirds grid', 'aria-pressed="true"')}${iconControl('trees', 'tree', 'Campus trees', 'aria-pressed="true" hidden', 'Show or hide campus trees')}${iconControl('quality', 'quality', 'Low graphics', 'aria-pressed="false"')}</div><label class="source-control control-module"><span class="sr-only">Controls</span><select id="source" aria-label="Control source"><option value="keyboard">Keyboard</option><option value="phone">Phone</option></select></label></section>
       <section class="photo-library" aria-label="Photo gallery"><span class="section-label">Photos <span id="photo-count">0</span></span><div id="photos"><span class="empty-photos">No photos.</span></div></section>
       <p id="map-credit" class="map-credit" hidden>1:1 meter scale · 30 m elevation data, smoothed · building details and satellite tree placement estimated. Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · <a href="/data/ateneo-campus.json" download>Campus data (ODbL)</a> · elevation courtesy of USGS via <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener noreferrer">Mapzen/AWS</a> · <a href="/data/ateneo-elevation.json" download>Elevation data</a> · <a href="https://commons.wikimedia.org/wiki/Category:Buildings_of_Ateneo_de_Manila_University" target="_blank" rel="noopener noreferrer">Building photo references</a></p>
+      <p id="silverstone-credit" class="map-credit" hidden>Approximate GP layout · 5.891 km modeled lap · illustrative scenery and car speeds. Based on <a href="https://www.silverstone.co.uk/sites/default/files/pdf/British%20Grand%20Prix%202025%20Map.pdf" target="_blank" rel="noopener noreferrer">Silverstone’s circuit map</a> and <a href="https://www.fia.com/system/files/decision-document/2025_silverstone_event_-_circuit_map_-_silverstone_2025.pdf" target="_blank" rel="noopener noreferrer">FIA circuit length</a>.</p>
       <footer><span id="connection-status"><i class="dot"></i> Starting session…</span><span id="performance">60 Hz simulation</span></footer>
       <div id="toast" class="toast" role="status"></div>
       <dialog id="pair-dialog"><div class="dialog-header"><div><h2>Pair phone</h2></div><button id="close-pair" class="icon-button" aria-label="Close pairing">×</button></div><p>One phone controls this station. Keep this laptop page open.</p><label class="connection-choice">Connection <select id="connection-path" aria-label="Connection path" disabled></select></label><div id="usb-setup" class="usb-setup" hidden><button id="connect-usb" class="button primary">Connect USB phone</button><p id="usb-status" role="status">Connect a data cable and allow USB debugging on your phone.</p></div><div class="qr-wrap"><canvas id="qr" aria-label="Phone pairing QR code" hidden></canvas></div><label class="url-label">Open on phone<input id="pair-url" readonly aria-label="Controller pairing URL"></label><button id="copy-pair-url" class="button quiet" disabled>Copy phone link</button><p id="pair-instructions" class="pair-instructions"></p><div class="pair-actions"><button id="revoke" class="button danger">Revoke phone & renew link</button><span id="pair-state">Waiting for a phone</span></div></dialog>
@@ -110,9 +111,9 @@ export async function mount(app: HTMLElement): Promise<void> {
     panel.setAttribute('aria-live', rally ? 'off' : 'polite');
     panel.dataset.complete = String(Boolean(course && nextGate === course.gates.length));
     if (rally) {
-      const pose = rallyPose(rally.distance);
-      el('course-name').textContent = 'Rally tracking';
-      el('course-count').textContent = `Lap ${pose.lap} · ${pose.speed.toFixed(0)} m/s`;
+      const pose = activeMap.circuit!.pose(rally.distance);
+      el('course-name').textContent = activeMap.id === 'silverstone' ? 'Formula One tracking' : 'Rally tracking';
+      el('course-count').textContent = `Lap ${pose.lap} · ${activeMap.id === 'silverstone' ? `${(pose.speed * 3.6).toFixed(0)} km/h` : `${pose.speed.toFixed(0)} m/s`}`;
       const percent = rally.flyingTime ? Math.round(rally.framedTime / rally.flyingTime * 100) : 0;
       el('course-next').textContent = rally.flyingTime
         ? `In frame ${percent}% · Streak ${rally.streak.toFixed(1)} s · Best ${rally.bestStreak.toFixed(1)} s`
@@ -194,7 +195,7 @@ export async function mount(app: HTMLElement): Promise<void> {
   const resetFlight = (message: string) => {
     const collided = state.mode === 'collided';
     pause(message); state = initialState(spot.pad, spot.heading, activeMap.ground); world.resetTrail();
-    rally = activeMap.id === 'rally' ? initialRallySession() : undefined;
+    rally = activeMap.circuit ? initialRallySession() : undefined;
     world.updateRally(0);
     nextGate = 0; updateCourse();
     el('collision-prompt').hidden = true;
@@ -229,13 +230,14 @@ export async function mount(app: HTMLElement): Promise<void> {
   el<HTMLInputElement>('gimbal').oninput = (event) => { if (source === 'keyboard') state.gimbal = Number((event.target as HTMLInputElement).value); };
   const applyMap = () => {
     course = PRACTICE_COURSES.find(route => route.id === spot.courseId);
-    el('stage').dataset.tracking = String(activeMap.id === 'rally');
+    el('stage').dataset.tracking = String(Boolean(activeMap.circuit));
     world.setMap(activeMap, spot); resetFlight('Location changed. Take off when ready.');
     obstacles = flightObstacles(activeMap, treesVisible);
     el('trees').hidden = activeMap.id !== 'ateneo';
     el('map-credit').hidden = activeMap.id !== 'ateneo';
-    el('map-boundary').textContent = activeMap.id === 'ateneo' ? 'Loyola Heights campus · 80 m ceiling'
-      : activeMap.id === 'rally' ? '340 × 280 m · 60 m ceiling' : '240 × 240 m · 60 m ceiling';
+    el('silverstone-credit').hidden = activeMap.id !== 'silverstone';
+    const b = activeMap.bounds;
+    el('map-boundary').textContent = `${activeMap.id === 'ateneo' ? 'Loyola Heights campus' : `${b.maxX - b.minX} × ${b.maxZ - b.minZ} m`} · ${b.ceiling} m ceiling`;
     setMapTip(spot.tip);
     setObserverMode(activeMap.id === 'ateneo' || Boolean(course) ? 'follow' : 'fixed');
     populateSpots();
@@ -251,8 +253,8 @@ export async function mount(app: HTMLElement): Promise<void> {
   el<HTMLSelectElement>('map').onchange = async (event) => {
     const select = event.target as HTMLSelectElement; const previous = activeMap;
     loadingMap = true; select.disabled = true; el<HTMLSelectElement>('photo-spot').disabled = true;
-    pause('Loading practice location…'); setMapTip('Loading campus geometry…');
-    try { activeMap = select.value === 'ateneo' ? await loadCampus() : select.value === 'rally' ? RALLY_MAP : PRACTICE_MAP; spot = activeMap.spots[0]; applyMap(); }
+    pause('Loading practice location…'); setMapTip('Loading practice location…');
+    try { activeMap = select.value === 'ateneo' ? await loadCampus() : select.value === 'rally' ? RALLY_MAP : select.value === 'silverstone' ? SILVERSTONE_MAP : PRACTICE_MAP; spot = activeMap.spots[0]; applyMap(); }
     catch (error) { activeMap = previous; select.value = previous.id; setMapTip(spot.tip); pause('Map could not be loaded. Start practice to resume.'); toast(error instanceof Error ? error.message : 'Map could not be loaded.'); }
     finally { loadingMap = false; select.disabled = false; el<HTMLSelectElement>('photo-spot').disabled = false; }
   };
@@ -374,8 +376,9 @@ export async function mount(app: HTMLElement): Promise<void> {
     let trackingSeconds = 0;
     while (accumulator >= 1 / 60) {
       const before = { x: state.x, y: state.y, z: state.z }, wasFlying = state.mode === 'flying';
-      if (rally && wasFlying) advanceRally(rally, 1 / 60);
-      const flightObstaclesNow = rally ? [...obstacles, rallyCarObstacle(rallyPose(rally.distance))] : obstacles;
+      const circuit = activeMap.circuit;
+      if (rally && wasFlying) advanceRally(rally, 1 / 60, circuit!.pose);
+      const flightObstaclesNow = rally ? [...obstacles, rallyCarObstacle(circuit!.pose(rally.distance), circuit!.car, circuit!.carName)] : obstacles;
       stepFlight(state, source === 'phone' ? remote.controls : keyboard.read(), 1 / 60, profile, flightObstaclesNow, activeMap.bounds, activeMap.ground); accumulator -= 1 / 60;
       if (state.mode === 'collided') {
         pause(`Collision with ${state.collision}. Reset the flight to try again.`);

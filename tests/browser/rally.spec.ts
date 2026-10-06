@@ -8,7 +8,7 @@ test('rally tracking moves the visible subject, freezes on pause, resets, and wo
   await expect(page.locator('#course-name')).toHaveText('Rally tracking');
   await expect(page.locator('#course-count')).toContainText('Lap 1');
   await expect(page.locator('#course-next')).toHaveText('Take off to start · Keep the car in frame');
-  await expect(page.locator('#map-boundary')).toHaveText('340 × 280 m · 60 m ceiling');
+  await expect(page.locator('#map-boundary')).toHaveText('340 × 280 m · 300 m ceiling');
   await expect(page.locator('#trees')).toBeHidden();
   await expect(page.locator('#observer-mode')).toHaveValue('fixed');
   await page.locator('#aids').click();

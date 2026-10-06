@@ -1,9 +1,11 @@
-import { OBSTACLES, PAD, PRACTICE_BOUNDS, overlapsFootprint, pointInPolygon, type FlightBounds, type MapPoint, type Obstacle } from './simulation';
+import { FLIGHT_CEILING, OBSTACLES, PAD, PRACTICE_BOUNDS, overlapsFootprint, pointInPolygon, type FlightBounds, type MapPoint, type Obstacle } from './simulation';
 import { FLAT_GROUND, terrainHeight, type GroundSampler, type TerrainGrid } from './terrain';
 import { barrelHeight, buildingModel, footprintCenter, pyramidHeight } from './landmarks';
 import { acaciaObstacle, campusTrees, type AcaciaTree } from './vegetation';
 import { PRACTICE_COURSES, PRACTICE_OBSTACLES } from './practice';
-import { RALLY_BOUNDS, RALLY_PAD, rallyPose } from './rally';
+import { RALLY_BOUNDS, RALLY_PAD, RALLY_CIRCUIT, rallyPose } from './rally';
+import type { RaceCircuit } from './circuit';
+import { SILVERSTONE_BOUNDS, SILVERSTONE_CIRCUIT, SILVERSTONE_PAD, SILVERSTONE_STRUCTURES } from './silverstone';
 
 export interface CampusFeature {
   id: number; kind: 'building' | 'road' | 'pitch' | 'green'; name: string; points: MapPoint[];
@@ -15,9 +17,10 @@ export interface PhotoSpot {
   target: [number, number, number]; featureId?: number; courseId?: string; tip: string;
 }
 export interface TrainingMap {
-  id: 'park' | 'ateneo' | 'rally'; name: string; bounds: FlightBounds; obstacles: Obstacle[];
+  id: 'park' | 'ateneo' | 'rally' | 'silverstone'; name: string; bounds: FlightBounds; obstacles: Obstacle[];
   spots: PhotoSpot[]; data?: CampusData; terrain?: TerrainGrid; trees?: AcaciaTree[]; ground: GroundSampler;
   obstaclesWithoutTrees?: Obstacle[];
+  circuit?: RaceCircuit;
 }
 export const PRACTICE_MAP: TrainingMap = {
   id: 'park', name: 'Practice park', bounds: PRACTICE_BOUNDS, obstacles: [...OBSTACLES, ...PRACTICE_OBSTACLES], ground: FLAT_GROUND,
@@ -28,10 +31,25 @@ export const PRACTICE_MAP: TrainingMap = {
 };
 const rallyStart = rallyPose(0);
 export const RALLY_MAP: TrainingMap = {
-  id: 'rally', name: 'Rally circuit', bounds: RALLY_BOUNDS, obstacles: [], ground: FLAT_GROUND,
+  id: 'rally', name: 'Rally circuit', bounds: RALLY_BOUNDS, obstacles: [], ground: FLAT_GROUND, circuit: RALLY_CIRCUIT,
   spots: [{ id: 'rally-tracking', name: 'Rally tracking', pad: RALLY_PAD,
     heading: Math.atan2(rallyStart.x - RALLY_PAD.x, RALLY_PAD.z - rallyStart.z), target: [rallyStart.x, 0.95, rallyStart.z],
     tip: 'Take off to start the car. Track it around a gravel circuit at 10–22 m/s (36–79 km/h), slowing for hairpins. Climb to 10–20 m for a wider view; use yaw and camera tilt to keep it framed. The panel measures airborne time in frame and your tracking streak. Pause freezes the car; Reset restarts the lap.' }],
+};
+const silverstoneStart = SILVERSTONE_CIRCUIT.pose(0);
+export const SILVERSTONE_MAP: TrainingMap = {
+  id: 'silverstone', name: 'Silverstone · Formula One', bounds: SILVERSTONE_BOUNDS,
+  obstacles: SILVERSTONE_STRUCTURES.map(({ name, point: [x, z], size: [w, h, d], heading }) => {
+    const c = Math.cos(heading), s = Math.sin(heading);
+    const footprint: MapPoint[] = [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]]
+      .map(([right, depth]) => [x + right * c - depth * s, z + right * s + depth * c]);
+    return { name, footprint, min: [Math.min(...footprint.map(p => p[0])), 0, Math.min(...footprint.map(p => p[1]))],
+      max: [Math.max(...footprint.map(p => p[0])), h, Math.max(...footprint.map(p => p[1]))] };
+  }), ground: FLAT_GROUND, circuit: SILVERSTONE_CIRCUIT,
+  spots: [{ id: 'silverstone-tracking', name: 'Hamilton Straight · F1 tracking', pad: SILVERSTONE_PAD,
+    heading: Math.atan2(silverstoneStart.x - SILVERSTONE_PAD.x, SILVERSTONE_PAD.z - silverstoneStart.z),
+    target: [silverstoneStart.x, 0.6, silverstoneStart.z],
+    tip: 'Track a Formula One car on an approximate full-size 5.891 km Silverstone GP circuit. The car runs at 30–85 m/s (108–306 km/h), slowing through corners. Climb for a wide view and anticipate each pass; the car is faster than the drone. Use Map overview to learn the circuit, then yaw and camera tilt to frame the car. Pause freezes the car; Reset restarts the lap.' }],
 };
 let campus: TrainingMap | undefined;
 export async function loadCampus(): Promise<TrainingMap> {
@@ -42,7 +60,7 @@ export async function loadCampus(): Promise<TrainingMap> {
   const terrain = await elevation.json() as TerrainGrid;
   const ground: GroundSampler = (x, z) => terrainHeight(terrain, x, z);
   const xs = data.boundary.map(([x]) => x), zs = data.boundary.map(([, z]) => z);
-  const bounds: FlightBounds = { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs), ceiling: 80, footprint: data.boundary };
+  const bounds: FlightBounds = { minX: Math.min(...xs), maxX: Math.max(...xs), minZ: Math.min(...zs), maxZ: Math.max(...zs), ceiling: FLIGHT_CEILING, footprint: data.boundary };
   const obstacles: Obstacle[] = data.features.filter((f) => f.kind === 'building').map((f) => {
     const center = footprintCenter(f.points), base = ground(...center), model = buildingModel(f.id, f.height!);
     return {

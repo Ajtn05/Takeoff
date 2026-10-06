@@ -1,36 +1,52 @@
-# Takeoff - Drone simulator
+# Takeoff
 
-Practice camera-drone flight and photo composition on your laptop. Fly with the keyboard or use a phone as a two-stick controller with DJI Modes 1, 2, and 3. Mode 2 is the default. A hosted deployment supports wireless pairing over Wi-Fi or mobile data; the local version also supports Android USB and local Wi-Fi.
+**Fly the route. Find the shot.**
 
-The observer view shows where the drone is going. The drone camera shows the resulting composition. Use both to learn how heading, movement, and camera tilt affect a shot, then switch to **Camera only** to practice framing without the observer view.
+Takeoff is a browser-based drone simulator that turns your laptop into a flight playground and camera practice station.Made to assist photographers of the Ateneo Resident Students Association (ARSA) in learning how to fly drones for documentation work. Thread a hoop slalom, follow a rally car through a hairpin, or find a new angle on Ateneo's campus. Fly with your keyboard or turn your phone into a two-stick controller, then bring home the shot as a PNG.
+
+[Play Takeoff](https://takeoff-0qrz.onrender.com/) · [Start flying locally](#get-started) · [Explore the maps](#choose-your-next-flight) · [Pair a phone](#pair-an-android-phone) · [Host your own](docs/HOSTING.md)
 
 ![Takeoff flight station with adjustable observer and drone camera views and bottom flight instruments](docs/images/workspace.png)
 
-## What you can practice
+## Choose your next flight
 
-- **Flight controls:** take off, hover, turn, move sideways, return to the pad, and land. Centered sticks brake the drone into a hover.
-- **Orientation:** compare movement from a fixed observer view with movement relative to the drone's heading.
-- **Photography:** tilt the stabilized camera, use the thirds grid, frame the orange sculpture, and download camera photos as PNGs.
-- **Coordinated movement:** use both phone sticks together for slow reveals and changes of viewpoint.
-- **Free flight:** take off, explore, reset a flight, and use fullscreen for more space.
-- **Obstacle routes:** follow a rising hoop slalom, thread progressively smaller wall gaps, or negotiate a covered corridor with two tight turns and a low beam. Numbered gates track your progress.
-- **Moving-subject tracking:** follow a rally car around a gravel circuit or frame a Formula One car around Silverstone's Grand Prix layout. Practice yaw and camera tilt with live time-in-frame and tracking-streak feedback.
-- **Flexible workspace:** choose camera-only, observer-only, adjustable side-by-side or stacked views, or the Classic sidebar. Collapse and restyle the bottom flight instruments; workspace preferences are saved locally.
-- **In-app guide:** the labeled **Guide** button covers startup, keyboard and phone controls, connections, and workspace layout, including in fullscreen.
-- **Adjustable observer:** orbit, pan, and zoom the fixed viewpoint, then return to it after using Follow or Overview.
-- **Drone tuning:** adjust flight and camera response, or start from DJI Mini 4 Pro, Air 3, Mavic 3 Classic, and Tracking helicopter presets. Applied settings and aircraft type are saved locally.
-- **Campus photography:** choose Ateneo de Manila's Loyola Heights campus and start near one of ten landmarks, or explore the expanded 240 × 240 m practice park.
-- **Speed and terrain:** fly the trainer at up to 20 m/s or the tracking helicopter at 90 m/s, choose slower limits for framing, and practice over the campus's modeled elevation.
+| Map | What you'll do |
+| --- | --- |
+| **Practice park** | Explore the sculpture plaza, then tackle **Hoop slalom**, **Window gaps**, or **Tight corridor**. Clear numbered gates through turns, altitude changes, and shrinking openings. |
+| **Rally circuit** | Follow a moving rally car around a gravel circuit. Keep it in frame through the hairpins and try to beat your best tracking streak. |
+| **Silverstone · Formula One** | Track an F1 car around an approximate **5.891 km** Grand Prix layout. Take the **Tracking helicopter** for flights at up to **90 m/s**. |
+| **Ateneo · Loyola Heights** | Launch near **ten campus landmarks**, explore modeled terrain and acacia-lined roads, and compose architectural shots around Gesù, Areté, Rizal Library, and more. |
 
-This is a working prototype with a practice park, a simplified Ateneo campus map, and adjustable assisted-flight profiles. Learners need no account or phone app. The hosted version opens from a link with no installation. The local version works without internet after dependencies and the app are installed and built. Campus geometry is bundled with the app.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/map-park.png" width="100%" alt="Hoop slalom in the practice park with numbered gates and flight instruments"><br><strong>Practice park · Hoop slalom</strong></td>
+    <td width="50%"><img src="docs/images/map-rally.png" width="100%" alt="Aerial view of the gravel rally circuit and its hairpin turns"><br><strong>Rally circuit</strong></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/map-silverstone.png" width="100%" alt="Aerial view of the Silverstone Formula One circuit with pit buildings and grandstands"><br><strong>Silverstone · Formula One</strong></td>
+    <td width="50%"><img src="docs/images/map-ateneo.png" width="100%" alt="Church of the Gesù and surrounding acacia trees on the modeled Ateneo campus"><br><strong>Ateneo · Loyola Heights</strong></td>
+  </tr>
+</table>
 
-[Open a hosted version](#open-a-hosted-version) · [Host your own](docs/HOSTING.md) · [Run locally](#get-started) · [Pair a phone](#pair-an-android-phone) · [Controls](#controls) · [Troubleshooting](#troubleshooting) · [Development](#development)
+## Your flight station
+
+- **See the flight and the frame.** Watch the drone from an adjustable observer view alongside its stabilized camera. Resize the split, stack the views, or go camera-only and fullscreen for a closer look at your composition.
+- **Put the sticks in your hands.** Pair a phone for two-stick control with DJI Modes **1, 2, and 3**, or use the keyboard. Centered sticks brake into a hover; takeoff and landing are automatic.
+- **Make the shot.** Adjust gimbal tilt, line up the thirds grid, and capture **1280 × 720 PNGs** without interface overlays. Download your favorites from the photo gallery.
+- **Tune your aircraft.** Adjust speed, acceleration, braking, and camera response. Start from the DJI Mini 4 Pro, Air 3, Mavic 3 Classic, or Tracking helicopter presets; applied settings are saved locally.
+- **Set up your workspace.** Keep live flight instruments at the bottom, choose glass or solid readouts, and save your layout preferences. The in-app **Guide** covers controls, pairing, and layouts, including in fullscreen.
+
+No account or phone app required. Run locally and fly offline once the app is installed and built, including the bundled campus map. Local phone control supports Android USB or Wi-Fi; a hosted deployment supports wireless pairing over Wi-Fi or mobile data.
+
+Takeoff is a working prototype with an assisted-flight model, approximate aircraft presets, and simplified scenery. See [Current scope](#current-scope) for simulation limits.
+
+[Open a hosted version](#open-a-hosted-version) · [Controls](#controls) · [Map details](#practice-maps) · [Troubleshooting](#troubleshooting) · [Development](#development)
 
 ## Open a hosted version
 
-Once an owner has deployed Takeoff, learners only need the deployment's HTTPS link:
+Open [Takeoff on Render](https://takeoff-0qrz.onrender.com/) on your laptop. No local installation is needed:
 
-1. Open the link on a laptop with a current WebGL 2 browser. Keyboard flight is available immediately.
+1. Use a current WebGL 2 browser. Keyboard flight is available immediately.
 2. To use a phone, select **Pair phone** and scan the QR code with the phone camera, or use **Copy phone link** to open the full link on the phone.
 3. Rotate the phone to landscape, center both sticks, and select **Enable controls**.
 4. Close the pairing dialog on the laptop, then select **Take off** on either device.
@@ -39,7 +55,7 @@ Both devices need internet access. They can use the same Wi-Fi, different networ
 
 **Phone USB on a hosted app:** plugging in an Android phone does not give a website access to the existing ADB connection. Direct cable-only control uses the [local USB setup](#usb-use-the-cable-instead-of-wi-fi). OS-supported USB tethering can provide internet for the hosted version, but controls still use the hosted relay; this is not a direct USB control transport. The hosted UI offers wireless pairing only.
 
-[Hosting instructions](docs/HOSTING.md) include a free Render deployment configuration. No public deployment URL has been created yet.
+[Hosting instructions](docs/HOSTING.md) include a free Render deployment configuration for running your own instance.
 
 ## Get started
 

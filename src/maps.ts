@@ -49,7 +49,7 @@ export const SILVERSTONE_MAP: TrainingMap = {
   spots: [{ id: 'silverstone-tracking', name: 'Hamilton Straight · F1 tracking', pad: SILVERSTONE_PAD,
     heading: Math.atan2(silverstoneStart.x - SILVERSTONE_PAD.x, SILVERSTONE_PAD.z - silverstoneStart.z),
     target: [silverstoneStart.x, 0.6, silverstoneStart.z],
-    tip: 'Track a Formula One car on an approximate full-size 5.891 km Silverstone GP circuit. The car runs at 30–85 m/s (108–306 km/h), slowing through corners. Climb for a wide view and anticipate each pass; the car is faster than the drone. Use Map overview to learn the circuit, then yaw and camera tilt to frame the car. Pause freezes the car; Reset restarts the lap.' }],
+    tip: 'Track a Formula One car on an approximate full-size 5.891 km Silverstone GP circuit, with 1 km of open approach space on every side. The car runs at 30–85 m/s (108–306 km/h). Select Tracking helicopter in Drone parameters to keep pace at up to 90 m/s; choose 85 m/s in the speed menu to match the car’s maximum. Use Map overview to learn the circuit, then yaw and camera tilt to frame the car. Pause freezes the car; Reset restarts the lap.' }],
 };
 let campus: TrainingMap | undefined;
 export async function loadCampus(): Promise<TrainingMap> {

@@ -28,7 +28,7 @@ export const assistanceDialogs = () => `
           </ol>
           <p class="guide-note"><kbd>Space</kbd> pauses or resumes. Opening Guide, pairing, or drone parameters pauses the flight. After closing, press <kbd>Space</kbd> to resume, or <kbd>T</kbd> to take off from the ground. After a collision, use Reset flight.</p>
           <p><strong>Tracking practice:</strong> choose <strong>Rally circuit · Tracking</strong> from the map menu. Take off to start the car, then climb to 10–20 m and follow it through fast straights and hairpins. Turn with <kbd>A</kbd> / <kbd>D</kbd> and tilt with <kbd>R</kbd> / <kbd>F</kbd> to keep it in the camera frame. The panel shows the car’s lap and speed, time in frame, and your current and best tracking streak. Pause freezes the car; Reset flight restarts the lap and clears tracking statistics.</p>
-          <p><strong>Formula One:</strong> choose <strong>Silverstone · Formula One</strong> for the approximate full-size Grand Prix circuit, with a moving open-wheel car. Use Map overview to learn the corners. The car travels faster than the drone, so climb for a wider view, anticipate its next pass, and turn and tilt to frame it. All maps have a 300 m simulator ceiling.</p>
+          <p><strong>Formula One:</strong> choose <strong>Silverstone · Formula One</strong> for the approximate full-size Grand Prix circuit, with a moving open-wheel car. Select <strong>Tracking helicopter</strong> in Drone parameters for a 90 m/s aircraft that can keep pace with the car. The speed menu includes 85 m/s to match its maximum pace. Silverstone has 1 km of open approach space beyond the circuit on every side. Use Map overview to learn the corners, then turn and tilt to frame the car. All maps have a 300 m simulator ceiling.</p>
           <details><summary>Starting a local server</summary><p>With Node.js 22.12 or newer installed, run these commands in the Takeoff project folder:</p><pre>npm ci\nnpm run build\nnpm start</pre><p>Open <a href="http://127.0.0.1:8080" target="_blank" rel="noopener noreferrer">127.0.0.1:8080</a>. Leave the terminal running. Future sessions only need <code>npm start</code> unless you change the app.</p></details>
         </section>
         <section id="guide-controls" role="tabpanel" aria-labelledby="guide-tab-controls" tabindex="0" hidden>
@@ -74,7 +74,7 @@ export const assistanceDialogs = () => `
       <div class="preset-choice"><label for="drone-preset">Drone preset</label><select id="drone-preset">${DRONE_PRESETS.map(preset => `<option value="${preset.id}">${preset.name}</option>`).join('')}<option value="custom">Custom</option></select></div>
       <p id="preset-description"></p>
       <div class="parameter-grid">${FLIGHT_PARAMETERS.map(field => `<div class="parameter-field"><label for="parameter-${field.key}">${field.label}<span id="unit-${field.key}">${field.unit}</span></label><div class="parameter-inputs"><input id="range-${field.key}" type="range" aria-label="${field.label} slider" aria-describedby="unit-${field.key} hint-${field.key}" min="${field.min}" max="${field.max}" step="${field.step}"><input id="parameter-${field.key}" name="${field.key}" type="number" aria-label="${field.label}" aria-describedby="unit-${field.key} hint-${field.key}" min="${field.min}" max="${field.max}" step="${field.step}" required></div><p id="hint-${field.key}">${field.hint}</p></div>`).join('')}</div>
-      <p class="preset-note">Commercial presets use published maximum flight speeds. Turn rate, acceleration, and braking are estimates for this assisted-flight simulator. Camera settings and aircraft size use the trainer defaults. <a id="preset-source" target="_blank" rel="noopener noreferrer" hidden>Manufacturer specifications</a></p>
+      <p class="preset-note">DJI presets use published maximum flight speeds and the trainer aircraft size. The tracking helicopter has its own model and rotor clearance, with simulator speeds and handling for F1 tracking. Turn rate, acceleration, and braking are estimates. Changing aircraft type returns you to the launch pad. <a id="preset-source" target="_blank" rel="noopener noreferrer" hidden>Manufacturer specifications</a></p>
       <div class="drone-actions"><button id="drone-defaults" class="button quiet" type="button">Restore trainer defaults</button><button id="cancel-drone" class="button quiet" type="button">Cancel</button><button class="button primary" type="submit">Apply settings</button></div>
       <p class="drone-pause-note">Changes apply when you resume. Flight stays paused after closing.</p>
     </form>
@@ -113,10 +113,12 @@ export function bindAssistance(root: HTMLElement, options: {
     dialog.addEventListener('keydown', event => { if (event.key === 'Escape') event.stopPropagation(); });
   }
   let draft = { ...options.settings().profile };
+  let draftType = options.settings().aircraftType;
   const presetSelect = el<HTMLSelectElement>('drone-preset');
   const describe = () => {
     const preset = DRONE_PRESETS.find(item => item.id === presetSelect.value);
-    el('preset-description').textContent = preset?.description ?? 'Your own flight and camera response settings.';
+    el('preset-description').textContent = preset?.description ?? `Your own ${draftType === 'helicopter' ? 'helicopter' : 'drone'} flight and camera response settings.`;
+    presetSelect.querySelector<HTMLOptionElement>('option[value="custom"]')!.textContent = draftType === 'helicopter' ? 'Custom helicopter' : 'Custom';
     const source = el<HTMLAnchorElement>('preset-source'); source.hidden = !preset?.source;
     if (preset?.source) source.href = preset.source; else source.removeAttribute('href');
   };
@@ -126,30 +128,30 @@ export function bindAssistance(root: HTMLElement, options: {
       el<HTMLInputElement>(`parameter-${field.key}`).value = value;
       el<HTMLInputElement>(`range-${field.key}`).value = value;
     }
-    presetSelect.value = presetForProfile(draft); describe();
+    presetSelect.value = presetForProfile(draft, draftType); describe();
   };
   el('drone-parameters').onclick = () => {
     options.pause('Drone parameters open. Apply or cancel, then start practice to resume.');
-    draft = { ...options.settings().profile }; render(); drone.showModal();
+    draft = { ...options.settings().profile }; draftType = options.settings().aircraftType; render(); drone.showModal();
   };
   el('close-drone').onclick = el('cancel-drone').onclick = () => drone.close();
   presetSelect.onchange = () => {
     const preset = DRONE_PRESETS.find(item => item.id === presetSelect.value);
-    if (preset) { draft = { ...preset.profile }; render(); } else describe();
+    if (preset) { draft = { ...preset.profile }; draftType = preset.aircraftType; render(); } else describe();
   };
   const readDraft = () => {
     for (const field of FLIGHT_PARAMETERS) draft[field.key] = storeParameter(field.key, el<HTMLInputElement>(`parameter-${field.key}`).valueAsNumber);
-    presetSelect.value = presetForProfile(draft); describe();
+    presetSelect.value = presetForProfile(draft, draftType); describe();
   };
   for (const field of FLIGHT_PARAMETERS) {
     const range = el<HTMLInputElement>(`range-${field.key}`), number = el<HTMLInputElement>(`parameter-${field.key}`);
     range.oninput = () => { number.value = range.value; readDraft(); };
     number.oninput = () => { if (number.validity.valid) range.value = number.value; readDraft(); };
   }
-  el('drone-defaults').onclick = () => { draft = { ...DRONE_PRESETS[0].profile }; render(); };
+  el('drone-defaults').onclick = () => { draft = { ...DRONE_PRESETS[0].profile }; draftType = 'quadcopter'; render(); };
   el<HTMLFormElement>('drone-form').onsubmit = (event) => {
     event.preventDefault();
     if (!el<HTMLFormElement>('drone-form').reportValidity()) return;
-    readDraft(); options.apply({ presetId: presetForProfile(draft), profile: { ...draft } }); drone.close();
+    readDraft(); options.apply({ presetId: presetForProfile(draft, draftType), aircraftType: draftType, profile: { ...draft } }); drone.close();
   };
 }

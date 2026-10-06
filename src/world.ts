@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { GENERIC_PROFILE, type DroneState } from './simulation';
+import { GENERIC_PROFILE, aircraftEnvelope, type AircraftType, type DroneState } from './simulation';
 import { PRACTICE_MAP, translationMarker, type TrainingMap, type PhotoSpot } from './maps';
 import { buildCampusBuilding, buildCampusTrees, terrainGeometry, terrainSurface } from './campus';
 import { buildingModel } from './landmarks';
 import { createDrone } from './drone';
+import { createHelicopter } from './helicopter';
 import { campusRoadWidth } from './vegetation';
 import { campusMaterial } from './campus-materials';
 import { PRACTICE_COURSES } from './practice';
@@ -26,6 +27,7 @@ export class TrainingWorld {
   private trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x428980, transparent: true, opacity: 0.65 }));
   private trailPoints: THREE.Vector3[] = [];
   private propellers: THREE.Mesh[] = [];
+  private aircraftType: AircraftType = 'quadcopter';
   private rallyWheels: THREE.Group[] = [];
   private rallyDust?: THREE.InstancedMesh;
   private rallyDistance = 0;
@@ -93,7 +95,7 @@ export class TrainingWorld {
       if (!['Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract'].includes(event.code)) return;
       event.preventDefault();
       const offset = this.observer.position.clone().sub(this.observerControls.target);
-      offset.setLength(THREE.MathUtils.clamp(offset.length() * (['Equal', 'NumpadAdd'].includes(event.code) ? 0.85 : 1.15), 2, 2500));
+      offset.setLength(THREE.MathUtils.clamp(offset.length() * (['Equal', 'NumpadAdd'].includes(event.code) ? 0.85 : 1.15), 2, this.observerControls.maxDistance));
       this.observer.position.copy(this.observerControls.target).add(offset); this.observerControls.update();
     });
     observerView.addEventListener('contextmenu', event => { if (this.observerMode === 'fixed') event.preventDefault(); });
@@ -171,6 +173,7 @@ export class TrainingWorld {
     const campus = map.id === 'ateneo';
     this.renderer.domElement.setAttribute('aria-label', `${map.name} rendered from the observer and drone cameras`);
     const silverstone = map.id === 'silverstone';
+    this.observerControls.maxDistance = silverstone ? 10000 : 2500;
     this.scene.fog = new THREE.Fog('#bdd8ec', silverstone ? 2400 : campus ? 900 : 400, silverstone ? 6500 : campus ? 2800 : 1500);
     this.camera.far = silverstone ? 8000 : 2500; this.camera.updateProjectionMatrix();
     this.observer.far = silverstone ? 16000 : 3000; this.observer.updateProjectionMatrix();
@@ -584,8 +587,23 @@ export class TrainingWorld {
     }
   }
   private buildDrone() {
-    const drone = createDrone(); this.body = drone.body; this.propellers = drone.propellers;
+    const drone = this.aircraftType === 'helicopter' ? createHelicopter() : createDrone();
+    this.body = drone.body; this.propellers = drone.propellers;
     this.drone.add(this.body); this.scene.add(this.drone); this.drone.layers.set(1);
+    this.renderer.domElement.dataset.aircraftType = this.aircraftType;
+  }
+  setAircraftType(type: AircraftType): void {
+    if (type === this.aircraftType) return;
+    const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>();
+    this.body.traverse(object => {
+      if (!(object instanceof THREE.Mesh)) return;
+      geometries.add(object.geometry);
+      for (const material of Array.isArray(object.material) ? object.material : [object.material]) materials.add(material);
+    });
+    geometries.forEach(geometry => geometry.dispose()); materials.forEach(material => material.dispose());
+    this.drone.remove(this.body); this.aircraftType = type; this.buildDrone();
+    this.shadowPose = []; this.framingPose = []; this.aidPosition.set(NaN, NaN, NaN);
+    this.renderer.shadowMap.needsUpdate = true;
   }
   setQuality(low: boolean): void {
     this.pixelRatio = low ? 1 : Math.min(devicePixelRatio, 2); this.renderer.setPixelRatio(this.pixelRatio);
@@ -602,11 +620,15 @@ export class TrainingWorld {
   update(s: DroneState, time: number): void {
     this.drone.position.set(s.x, s.y, s.z); this.drone.rotation.y = -s.heading;
     this.body.rotation.set(s.pitch, 0, s.bank);
-    this.propellers.forEach((p, i) => p.rotation.y = time * (i % 2 ? -0.06 : 0.06));
-    this.camera.position.set(s.x + Math.sin(s.heading) * 0.105, s.y - 0.025, s.z - Math.cos(s.heading) * 0.105);
+    this.propellers.forEach((p, i) => {
+      if (p.userData.spinAxis === 'x') p.rotation.x = time * 0.08;
+      else p.rotation.y = time * (i % 2 ? -0.06 : 0.06);
+    });
+    const envelope = aircraftEnvelope(this.aircraftType);
+    this.camera.position.set(s.x + Math.sin(s.heading) * envelope.cameraForward, s.y + envelope.cameraHeight, s.z - Math.cos(s.heading) * envelope.cameraForward);
     this.camera.rotation.set(THREE.MathUtils.degToRad(s.gimbal), -s.heading, 0, 'YXZ');
     this.camera.updateMatrixWorld();
-    this.droneMarker.position.set(s.x, s.y + 0.8, s.z);
+    this.droneMarker.position.set(s.x, s.y + (this.aircraftType === 'helicopter' ? envelope.halfHeight + 0.4 : 0.8), s.z);
     const ground = this.map.ground(s.x, s.z);
     this.sun.position.set(s.x - 60, ground + 100, s.z + 45); this.sun.target.position.set(s.x, ground, s.z);
     const shadowPose = [s.x, s.y, s.z, s.heading, s.pitch, s.bank, this.rallyDistance];
@@ -628,7 +650,9 @@ export class TrainingWorld {
       this.trail.geometry.dispose(); this.trail.geometry = new THREE.BufferGeometry().setFromPoints(this.trailPoints);
     }
     if (this.observerMode === 'follow') {
-      this.observer.position.lerp(new THREE.Vector3(s.x - Math.sin(s.heading) * 9 + 3, s.y + 6, s.z + Math.cos(s.heading) * 9), 0.06);
+      const helicopter = this.aircraftType === 'helicopter', distance = helicopter ? 18 : 9;
+      this.observer.position.lerp(new THREE.Vector3(s.x - Math.sin(s.heading) * distance + (helicopter ? 4 : 3),
+        s.y + (helicopter ? 10 : 6), s.z + Math.cos(s.heading) * distance), 0.06);
       this.observer.lookAt(s.x, s.y, s.z);
     } else if (this.overview) {
       const b = this.map.bounds;

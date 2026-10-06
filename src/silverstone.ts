@@ -30,11 +30,12 @@ export const SILVERSTONE_CIRCUIT: RaceCircuit = {
   ...createCircuit(points, { minSpeed: 30, maxSpeed: 85, cornerAcceleration: 24, length: 5891 }),
   roadWidth: 15, car: { width: 2, length: 5.5, height: 1.15, wheelRadius: 0.36 }, carName: 'Formula One car',
 };
+export const SILVERSTONE_APPROACH_MARGIN = 1000;
 export const SILVERSTONE_BOUNDS: FlightBounds = {
-  minX: Math.floor((Math.min(...SILVERSTONE_CIRCUIT.path.map(p => p.x)) - 100) / 10) * 10,
-  maxX: Math.ceil((Math.max(...SILVERSTONE_CIRCUIT.path.map(p => p.x)) + 100) / 10) * 10,
-  minZ: Math.floor((Math.min(...SILVERSTONE_CIRCUIT.path.map(p => p.z)) - 100) / 10) * 10,
-  maxZ: Math.ceil((Math.max(...SILVERSTONE_CIRCUIT.path.map(p => p.z)) + 100) / 10) * 10,
+  minX: Math.floor((Math.min(...SILVERSTONE_CIRCUIT.path.map(p => p.x)) - SILVERSTONE_APPROACH_MARGIN) / 10) * 10,
+  maxX: Math.ceil((Math.max(...SILVERSTONE_CIRCUIT.path.map(p => p.x)) + SILVERSTONE_APPROACH_MARGIN) / 10) * 10,
+  minZ: Math.floor((Math.min(...SILVERSTONE_CIRCUIT.path.map(p => p.z)) - SILVERSTONE_APPROACH_MARGIN) / 10) * 10,
+  maxZ: Math.ceil((Math.max(...SILVERSTONE_CIRCUIT.path.map(p => p.z)) + SILVERSTONE_APPROACH_MARGIN) / 10) * 10,
   ceiling: FLIGHT_CEILING,
 };
 const start = SILVERSTONE_CIRCUIT.pose(0);

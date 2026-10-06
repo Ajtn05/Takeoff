@@ -1,7 +1,7 @@
 import QRCode from 'qrcode';
 import { neutralControls, type Action, type ServerMessage, type SessionInfo, type Telemetry } from '../shared/protocol';
 import { KeyboardInput, RemoteInput } from './input';
-import { initialState, stepFlight, takeoff, land, GROUND_HEIGHT } from './simulation';
+import { initialState, stepFlight, takeoff, land, aircraftEnvelope } from './simulation';
 import { TrainerSocket } from './socket';
 import { TrainingWorld } from './world';
 import { bindFullscreen } from './fullscreen';
@@ -89,10 +89,13 @@ export async function mount(app: HTMLElement): Promise<void> {
   let obstacles = flightObstacles(activeMap, treesVisible);
   let droneSettings = defaultDroneSettings();
   try { droneSettings = parseDroneSettings(localStorage.getItem(PROFILE_STORAGE_KEY)); } catch { /* Use trainer defaults if storage is unavailable. */ }
+  const envelope = () => aircraftEnvelope(droneSettings.aircraftType);
+  world.setAircraftType(droneSettings.aircraftType);
   const profile = { ...droneSettings.profile };
   const updateSpeedMenu = () => {
     const select = el<HTMLSelectElement>('flight-speed'); select.replaceChildren();
-    for (const speed of [...new Set([5, 10, droneSettings.profile.speed])].filter(speed => speed <= droneSettings.profile.speed).sort((a, b) => a - b)) {
+    const choices = droneSettings.aircraftType === 'helicopter' ? [5, 10, 20, 50, 85, droneSettings.profile.speed] : [5, 10, droneSettings.profile.speed];
+    for (const speed of [...new Set(choices)].filter(speed => speed <= droneSettings.profile.speed).sort((a, b) => a - b)) {
       select.add(new Option(`${speed} m/s`, String(speed)));
     }
     select.value = String(droneSettings.profile.speed);
@@ -103,7 +106,7 @@ export async function mount(app: HTMLElement): Promise<void> {
     const specs = document.querySelector<HTMLElement>('.camera-spec')!; specs.title = label; specs.setAttribute('aria-label', label);
   };
   updateSpeedMenu(); updateCameraSpecs();
-  let state = initialState(), paused = true, reason = 'Take off to begin.';
+  let state = initialState(spot.pad, spot.heading, activeMap.ground, envelope()), paused = true, reason = 'Take off to begin.';
   let course = PRACTICE_COURSES.find(route => route.id === spot.courseId), nextGate = 0;
   let rally: RallySession | undefined;
   const updateCourse = () => {
@@ -125,7 +128,7 @@ export async function mount(app: HTMLElement): Promise<void> {
     el('course-count').textContent = `${nextGate} / ${course.gates.length}`;
     const gate = course.gates[nextGate];
     el('course-next').textContent = gate
-      ? `Next: ${String(nextGate + 1).padStart(2, '0')} · ${(gate.center[1] - GROUND_HEIGHT).toFixed(1)} m AGL · ${gate.width.toFixed(1)} m opening`
+      ? `Next: ${String(nextGate + 1).padStart(2, '0')} · ${(gate.center[1] - envelope().restHeight).toFixed(1)} m AGL · ${gate.width.toFixed(1)} m opening`
       : 'Course complete · Reset to fly again';
     world.setCourseProgress(nextGate);
   };
@@ -194,7 +197,7 @@ export async function mount(app: HTMLElement): Promise<void> {
   el('takeoff').onclick = () => localAction('takeoff'); el('land').onclick = () => localAction('land'); el('capture').onclick = () => localAction('capture');
   const resetFlight = (message: string) => {
     const collided = state.mode === 'collided';
-    pause(message); state = initialState(spot.pad, spot.heading, activeMap.ground); world.resetTrail();
+    pause(message); state = initialState(spot.pad, spot.heading, activeMap.ground, envelope()); world.resetTrail();
     rally = activeMap.circuit ? initialRallySession() : undefined;
     world.updateRally(0);
     nextGate = 0; updateCourse();
@@ -270,10 +273,13 @@ export async function mount(app: HTMLElement): Promise<void> {
   bindAssistance(document.querySelector<HTMLElement>('.simulator')!, {
     settings: () => droneSettings, pause, pair: showPair,
     apply: (settings: DroneSettings) => {
+      const typeChanged = settings.aircraftType !== droneSettings.aircraftType;
       droneSettings = settings; Object.assign(profile, settings.profile); updateSpeedMenu(); updateCameraSpecs();
+      world.setAircraftType(settings.aircraftType);
+      if (typeChanged) resetFlight('Aircraft changed. Take off when ready.');
       try { localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(settings)); } catch { /* Keep this session usable. */ }
-      const name = DRONE_PRESETS.find(preset => preset.id === settings.presetId)?.name ?? 'Custom drone';
-      toast(`${name} settings applied. Start practice to resume.`);
+      const name = DRONE_PRESETS.find(preset => preset.id === settings.presetId)?.name ?? `Custom ${settings.aircraftType === 'helicopter' ? 'helicopter' : 'drone'}`;
+      toast(`${name} settings applied. ${typeChanged ? 'Take off when ready.' : 'Start practice to resume.'}`);
     },
   });
   const path = el<HTMLSelectElement>('connection-path');
@@ -364,7 +370,7 @@ export async function mount(app: HTMLElement): Promise<void> {
   };
   try { await newSession(); } catch (error) { pairingError(error); }
   let previous = performance.now(), accumulator = 0, lastStatus = 0, frames = 0, fps = 0, fpsAt = previous;
-  const altitude = () => Math.max(0, state.y - activeMap.ground(state.x, state.z) - GROUND_HEIGHT);
+  const altitude = () => Math.max(0, state.y - activeMap.ground(state.x, state.z) - envelope().restHeight);
   const telemetry = (): Telemetry => ({ altitude: altitude(), heading: state.heading * 180 / Math.PI, speed: Math.hypot(state.vx, state.vz),
     gimbal: state.gimbal, mode: state.mode, paused, reason, captures, receiptToFrameMs, lastInputSeq: remote.sequence });
   const frame = (now: number) => {
@@ -379,7 +385,7 @@ export async function mount(app: HTMLElement): Promise<void> {
       const circuit = activeMap.circuit;
       if (rally && wasFlying) advanceRally(rally, 1 / 60, circuit!.pose);
       const flightObstaclesNow = rally ? [...obstacles, rallyCarObstacle(circuit!.pose(rally.distance), circuit!.car, circuit!.carName)] : obstacles;
-      stepFlight(state, source === 'phone' ? remote.controls : keyboard.read(), 1 / 60, profile, flightObstaclesNow, activeMap.bounds, activeMap.ground); accumulator -= 1 / 60;
+      stepFlight(state, source === 'phone' ? remote.controls : keyboard.read(), 1 / 60, profile, flightObstaclesNow, activeMap.bounds, activeMap.ground, envelope()); accumulator -= 1 / 60;
       if (state.mode === 'collided') {
         pause(`Collision with ${state.collision}. Reset the flight to try again.`);
         el('collision-details').textContent = `Hit ${state.collision}. Reset to the launch point.`;

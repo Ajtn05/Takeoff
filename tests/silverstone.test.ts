@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { neutralControls } from '../shared/protocol';
 import { PRACTICE_MAP, RALLY_MAP, SILVERSTONE_MAP } from '../src/maps';
-import { SILVERSTONE_CIRCUIT, SILVERSTONE_CORNERS } from '../src/silverstone';
+import { SILVERSTONE_APPROACH_MARGIN, SILVERSTONE_CIRCUIT, SILVERSTONE_CORNERS } from '../src/silverstone';
 import { advanceRally, initialRallySession, rallyCarObstacle } from '../src/rally';
 import { GENERIC_PROFILE, GROUND_HEIGHT, initialState, stepFlight, takeoff } from '../src/simulation';
 
@@ -21,6 +21,23 @@ test('Silverstone preserves a full-size closed GP lap and keeps the road inside 
   const speeds = circuit.path.map((_, i) => circuit.pose(i / (circuit.path.length - 1) * circuit.length).speed);
   assert.equal(Math.max(...speeds), 85);
   assert.ok(Math.min(...speeds) >= 30 && Math.min(...speeds) < 40);
+});
+
+test('Silverstone approach space extends at least 1 km beyond every side of the circuit', () => {
+  const b = SILVERSTONE_MAP.bounds, path = SILVERSTONE_CIRCUIT.path;
+  const minX = Math.min(...path.map(p => p.x)), maxX = Math.max(...path.map(p => p.x));
+  const minZ = Math.min(...path.map(p => p.z)), maxZ = Math.max(...path.map(p => p.z));
+  assert.equal(SILVERSTONE_APPROACH_MARGIN, 1000);
+  assert.ok(minX - b.minX >= 1000 && b.maxX - maxX >= 1000);
+  assert.ok(minZ - b.minZ >= 1000 && b.maxZ - maxZ >= 1000);
+  for (const pad of [{ x: minX - 700, z: 0 }, { x: maxX + 700, z: 0 }, { x: 0, z: minZ - 700 }, { x: 0, z: maxZ + 700 }]) {
+    const state = initialState(pad); state.mode = 'flying'; state.y = 30;
+    stepFlight(state, neutralControls(), 1 / 60, GENERIC_PROFILE, SILVERSTONE_MAP.obstacles, b);
+    assert.equal(state.mode, 'flying');
+  }
+  const outside = initialState({ x: b.maxX + 1, z: 0 }); outside.mode = 'flying'; outside.y = 30;
+  stepFlight(outside, neutralControls(), 1 / 60, GENERIC_PROFILE, [], b);
+  assert.equal(outside.collision, 'practice boundary');
 });
 
 test('F1 progression is stable across frame rates and wraps laps without teleporting', () => {

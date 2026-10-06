@@ -39,14 +39,25 @@ test('custom acceleration and braking change stopping distance without changing 
 
 test('saved presets and custom profiles round trip; corrupt or unsafe numeric settings fall back', () => {
   for (const preset of DRONE_PRESETS) {
-    assert.deepEqual(parseDroneSettings(JSON.stringify({ presetId: preset.id, profile: preset.profile })), { presetId: preset.id, profile: preset.profile });
+    const expected = { presetId: preset.id, aircraftType: preset.aircraftType, profile: preset.profile };
+    assert.deepEqual(parseDroneSettings(JSON.stringify(expected)), expected);
+    assert.deepEqual(parseDroneSettings(JSON.stringify({ presetId: preset.id, profile: preset.profile })), expected);
   }
   const custom = { ...GENERIC_PROFILE, speed: 7.5, descentRate: 2, yawRate: Math.PI / 4 };
   assert.equal(presetForProfile(custom), 'custom');
-  assert.deepEqual(parseDroneSettings(JSON.stringify({ presetId: 'air-3', profile: custom })), { presetId: 'custom', profile: custom });
+  assert.deepEqual(parseDroneSettings(JSON.stringify({ presetId: 'air-3', profile: custom })), { presetId: 'custom', aircraftType: 'quadcopter', profile: custom });
   for (const raw of [null, '', '{', 'null', '{}', JSON.stringify({ profile: { ...GENERIC_PROFILE, speed: 0 } }),
     JSON.stringify({ profile: { ...GENERIC_PROFILE, braking: '8' } }), JSON.stringify({ profile: { ...GENERIC_PROFILE, yawRate: 999 } }),
-    JSON.stringify({ profile: { ...GENERIC_PROFILE, acceleration: null } })]) {
+    JSON.stringify({ profile: { ...GENERIC_PROFILE, acceleration: null } }), JSON.stringify({ profile: GENERIC_PROFILE, aircraftType: 'jet' })]) {
     assert.deepEqual(parseDroneSettings(raw), defaultDroneSettings());
+  }
+});
+
+test('custom helicopter tuning keeps its aircraft type when saved and restored', () => {
+  const helicopter = DRONE_PRESETS.find(preset => preset.id === 'tracking-helicopter')!;
+  for (const profile of [{ ...helicopter.profile, speed: 85 }, { ...GENERIC_PROFILE }]) {
+    const settings = { presetId: 'custom', aircraftType: 'helicopter', profile };
+    assert.equal(presetForProfile(profile, 'helicopter'), 'custom');
+    assert.deepEqual(parseDroneSettings(JSON.stringify(settings)), settings);
   }
 });

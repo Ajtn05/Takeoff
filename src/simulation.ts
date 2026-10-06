@@ -14,6 +14,16 @@ export type MapPoint = [number, number];
 export const DRONE_DIMENSIONS = { length: 0.2588, width: 0.326, height: 0.1058, rotorDiameter: 0.22 };
 export const DRONE_RADIUS = Math.hypot((DRONE_DIMENSIONS.width - 0.03) / 2, (DRONE_DIMENSIONS.length - 0.03) / 2) + DRONE_DIMENSIONS.rotorDiameter / 2;
 export const DRONE_HALF_HEIGHT = DRONE_DIMENSIONS.height / 2;
+export type AircraftType = 'quadcopter' | 'helicopter';
+export interface AircraftEnvelope { radius: number; halfHeight: number; restHeight: number; cameraForward: number; cameraHeight: number }
+export const DRONE_ENVELOPE: AircraftEnvelope = {
+  radius: DRONE_RADIUS, halfHeight: DRONE_HALF_HEIGHT, restHeight: 0.065, cameraForward: 0.105, cameraHeight: -0.025,
+};
+// The tracking helicopter is an illustrative simulator aircraft, including its rotor and tail.
+export const HELICOPTER_ENVELOPE: AircraftEnvelope = {
+  radius: 4.5, halfHeight: 1.2, restHeight: 1.22, cameraForward: 1.35, cameraHeight: -0.63,
+};
+export const aircraftEnvelope = (type: AircraftType): AircraftEnvelope => type === 'helicopter' ? HELICOPTER_ENVELOPE : DRONE_ENVELOPE;
 export interface Obstacle {
   name: string; min: [number, number, number]; max: [number, number, number]; footprint?: MapPoint[]; topAt?: GroundSampler;
   intersects?: (x: number, y: number, z: number, radius: number, halfHeight: number) => boolean;
@@ -38,9 +48,9 @@ export interface DroneState {
   takeoffY?: number;
 }
 export const PAD = { x: 0, z: 9 };
-export const GROUND_HEIGHT = 0.065;
-export const initialState = (pad = PAD, heading = 0, ground: GroundSampler = FLAT_GROUND): DroneState => ({
-  x: pad.x, y: ground(pad.x, pad.z) + GROUND_HEIGHT, z: pad.z, vx: 0, vy: 0, vz: 0, heading,
+export const GROUND_HEIGHT = DRONE_ENVELOPE.restHeight;
+export const initialState = (pad = PAD, heading = 0, ground: GroundSampler = FLAT_GROUND, envelope = DRONE_ENVELOPE): DroneState => ({
+  x: pad.x, y: ground(pad.x, pad.z) + envelope.restHeight, z: pad.z, vx: 0, vy: 0, vz: 0, heading,
   yawVelocity: 0, gimbal: -12, bank: 0, pitch: 0, mode: 'grounded', collision: null,
 });
 const approach = (value: number, target: number, amount: number) => value + Math.max(-amount, Math.min(amount, target - value));
@@ -74,11 +84,11 @@ export function overlapsFootprint(x: number, z: number, polygon: MapPoint[], rad
     return Math.hypot(x - ax - t * (bx - ax), z - az - t * (bz - az)) < radius;
   });
 }
-export function stepFlight(s: DroneState, controls: Controls, dt: number, profile = GENERIC_PROFILE, obstacles = OBSTACLES, bounds = PRACTICE_BOUNDS, ground: GroundSampler = FLAT_GROUND): void {
+export function stepFlight(s: DroneState, controls: Controls, dt: number, profile = GENERIC_PROFILE, obstacles = OBSTACLES, bounds = PRACTICE_BOUNDS, ground: GroundSampler = FLAT_GROUND, envelope = DRONE_ENVELOPE): void {
   if (dt <= 0 || dt > 0.05 || s.mode === 'collided') return;
-  const subdivisions = Math.ceil((Math.hypot(s.vx, s.vy, s.vz) * dt + profile.acceleration * dt * dt) / (DRONE_RADIUS / 2));
+  const subdivisions = Math.ceil((Math.hypot(s.vx, s.vy, s.vz) * dt + profile.acceleration * dt * dt) / (Math.min(envelope.radius, DRONE_RADIUS) / 2));
   if (subdivisions > 1) {
-    for (let i = 0; i < subdivisions; i++) stepFlight(s, controls, dt / subdivisions, profile, obstacles, bounds, ground);
+    for (let i = 0; i < subdivisions; i++) stepFlight(s, controls, dt / subdivisions, profile, obstacles, bounds, ground, envelope);
     return;
   }
   s.gimbal = clamp(s.gimbal + controls.gimbal * profile.gimbalRate * dt, profile.gimbalMin, profile.gimbalMax);
@@ -94,16 +104,16 @@ export function stepFlight(s: DroneState, controls: Controls, dt: number, profil
   const scale = distance === 0 ? 0 : Math.min(1, rate * dt / distance);
   s.vx += dx * scale; s.vz += dz * scale;
   let targetClimb = input.climb * (input.climb >= 0 ? profile.climbRate : profile.descentRate);
-  const rest = ground(s.x, s.z) + GROUND_HEIGHT;
+  const rest = ground(s.x, s.z) + envelope.restHeight;
   if (s.mode === 'taking-off') targetClimb = clamp(((s.takeoffY ?? rest + 3) - s.y) * 2, 0, 1.5);
   if (s.mode === 'landing') targetClimb = -Math.min(1, (s.y - rest) * 2 + 0.15);
   s.vy = approach(s.vy, targetClimb, profile.acceleration * dt);
   const next = { x: s.x + s.vx * dt, y: s.y + s.vy * dt, z: s.z + s.vz * dt };
-  const hit = obstacles.find((o) => next.x + DRONE_RADIUS > o.min[0] && next.x - DRONE_RADIUS < o.max[0] &&
-    next.y + DRONE_HALF_HEIGHT > o.min[1] && next.y - DRONE_HALF_HEIGHT < (o.topAt?.(next.x, next.z) ?? o.max[1]) && next.z + DRONE_RADIUS > o.min[2] && next.z - DRONE_RADIUS < o.max[2] &&
-    (!o.footprint || overlapsFootprint(next.x, next.z, o.footprint)) &&
-    (!o.intersects || o.intersects(next.x, next.y, next.z, DRONE_RADIUS, DRONE_HALF_HEIGHT)));
-  const nextGround = ground(next.x, next.z), nextRest = nextGround + GROUND_HEIGHT;
+  const hit = obstacles.find((o) => next.x + envelope.radius > o.min[0] && next.x - envelope.radius < o.max[0] &&
+    next.y + envelope.halfHeight > o.min[1] && next.y - envelope.halfHeight < (o.topAt?.(next.x, next.z) ?? o.max[1]) && next.z + envelope.radius > o.min[2] && next.z - envelope.radius < o.max[2] &&
+    (!o.footprint || overlapsFootprint(next.x, next.z, o.footprint, envelope.radius)) &&
+    (!o.intersects || o.intersects(next.x, next.y, next.z, envelope.radius, envelope.halfHeight)));
+  const nextGround = ground(next.x, next.z), nextRest = nextGround + envelope.restHeight;
   const boundary = next.x < bounds.minX || next.x > bounds.maxX || next.z < bounds.minZ || next.z > bounds.maxZ || next.y - nextRest > bounds.ceiling ||
     (bounds.footprint && !pointInPolygon(next.x, next.z, bounds.footprint));
   const groundHit = next.y < nextRest && s.mode !== 'landing';

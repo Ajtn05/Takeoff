@@ -1,5 +1,63 @@
 import { test, expect } from '@playwright/test';
 
+test('park routes launch, count flown hoops, reset, and remain usable in fullscreen and on mobile', async ({ page }) => {
+  test.setTimeout(60_000);
+  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  const routes = page.getByRole('combobox', { name: 'Choose a practice route' });
+  await expect(routes).toBeVisible(); await expect(page.locator('#photo-spot option')).toHaveCount(4);
+  await expect(page.locator('#course-progress')).toBeHidden();
+  await page.locator('#flight-speed').selectOption('5');
+  await routes.selectOption('hoop-slalom');
+  await expect(page.locator('#course-name')).toHaveText('Hoop slalom');
+  await expect(page.locator('#course-count')).toHaveText('0 / 7');
+  await expect(page.locator('#observer-mode')).toHaveValue('follow');
+  await page.locator('#takeoff').click();
+  await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying', { timeout: 10_000 });
+  await page.keyboard.down('ArrowUp');
+  await expect(page.locator('#course-count')).toHaveText('1 / 7', { timeout: 8_000 });
+  await page.keyboard.up('ArrowUp');
+  await expect(page.locator('#course-next')).toContainText('Next: 02');
+  await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying');
+  await page.locator('#pause').click();
+  await expect(page.locator('#flight-status')).toHaveAttribute('data-paused', 'true');
+  await page.mouse.move(0, 0);
+  await page.screenshot({ style: '#toast { visibility: hidden; }', path: 'test-results/park-hoop-slalom.png', fullPage: true });
+  await page.locator('#reset').click();
+  await expect(page.locator('#course-count')).toHaveText('0 / 7');
+  await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'grounded');
+  for (const [id, name, count] of [['window-gaps', 'Window gaps', '0 / 5'], ['tight-corridor', 'Tight corridor', '0 / 6']]) {
+    await routes.selectOption(id);
+    await expect(page.locator('#course-name')).toHaveText(name); await expect(page.locator('#course-count')).toHaveText(count);
+    await expect(page.locator('#flight-status')).toHaveAttribute('data-paused', 'true');
+    await page.locator('#takeoff').click();
+    await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying', { timeout: 10_000 });
+    await page.locator('#pause').click();
+    await expect(page.locator('#flight-status')).toHaveAttribute('data-paused', 'true');
+    await page.mouse.move(0, 0);
+    await page.screenshot({ style: '#toast { visibility: hidden; }', path: `test-results/park-${id}.png`, fullPage: true });
+  }
+  await page.locator('#simulator-fullscreen').click();
+  await expect(page.locator('#course-progress')).toBeVisible();
+  await page.locator('#simulator-fullscreen').click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(routes).toBeVisible(); await expect(page.locator('#course-progress')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.screenshot({ style: '#toast { visibility: hidden; }', path: 'test-results/park-route-mobile.png', fullPage: true });
+  await page.locator('#simulator-fullscreen').click();
+  const progress = (await page.locator('#course-progress').boundingBox())!, camera = (await page.locator('#camera-column').boundingBox())!;
+  expect(progress.y).toBeGreaterThan(camera.y + camera.height);
+  await page.screenshot({ style: '#toast { visibility: hidden; }', path: 'test-results/park-route-mobile-fullscreen.png' });
+  await page.locator('#simulator-fullscreen').click();
+  await routes.selectOption('sculpture'); await expect(page.locator('#course-progress')).toBeHidden();
+  await page.locator('#observer-mode').selectOption('overview');
+  await page.setViewportSize({ width: 1440, height: 1050 });
+  await page.getByRole('button', { name: 'Observer only', exact: true }).click();
+  await page.mouse.move(0, 0);
+  await page.screenshot({ style: '#toast { visibility: hidden; }', path: 'test-results/park-courses-overview.png', fullPage: true });
+  expect(errors).toEqual([]);
+});
+
 test('campus trees toggle immediately and the preference survives location changes and reloads', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -65,7 +123,8 @@ test('guide is removed; campus spots switch cleanly and preserve photos', async 
   await page.locator('#aids').click();
   await page.screenshot({ path: 'test-results/ateneo-acacias-and-halls.png', fullPage: true });
   await page.screenshot({ path: 'test-results/ateneo-flight.png', fullPage: true });
-  await page.locator('#map').selectOption('park'); await expect(page.locator('#spot-control')).toBeHidden();
+  await page.locator('#map').selectOption('park'); await expect(page.getByRole('combobox', { name: 'Choose a practice route' })).toBeVisible();
+  await expect(page.locator('#photo-spot option')).toHaveCount(4); await expect(page.locator('#course-progress')).toBeHidden();
   await expect(page.locator('#map-boundary')).toContainText('240 × 240'); await expect(page.locator('#photos img')).toHaveCount(1);
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

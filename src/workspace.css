@@ -164,6 +164,16 @@
 .simulator .flight-panel.is-collapsed .telemetry strong { font-size: 16px; gap: 3px; margin-top: 4px; padding: 5px 4px; }
 .collision-prompt { position: absolute; z-index: 12; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 360px; max-width: calc(100% - 32px); padding: 22px; border: 1px solid #ab8860; border-radius: 7px; background: linear-gradient(#302c27, #20201f); box-shadow: inset 0 1px #fff1, 0 12px 40px #0007; }
 .collision-prompt[hidden] { display: none; }
+.course-progress { position: absolute; z-index: 5; top: 62px; left: 14px; max-width: calc(100% - 28px); padding: 10px 12px; border: 1px solid #74838c; border-radius: 4px; background: #181c20ed; color: #e4e9ed; font: 12px var(--ui); pointer-events: none; }
+.course-progress[hidden] { display: none; }
+.course-progress > div { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 6px; }
+.course-progress strong { font-weight: 600; }
+.course-progress #course-count { color: #ffe6a0; font-variant-numeric: tabular-nums; }
+.course-progress > span { display: block; color: #c4cdd4; line-height: 1.5; }
+.course-progress[data-complete=true] { border-color: #75c69b; }
+.course-progress[data-complete=true] #course-count { color: #75c69b; }
+.viewport-stage[data-layout=camera] .course-progress { top: 14px; }
+@media (max-width: 620px) { .course-progress { top: 58px; left: 10px; max-width: calc(100% - 20px); } }
 .collision-heading { display: flex; align-items: center; gap: 10px; color: #efc58f; }
 .collision-heading .ui-icon { width: 22px; height: 22px; }
 .collision-heading h2 { font-size: 20px; font-weight: 600; letter-spacing: 0; }
@@ -265,6 +275,10 @@ body.flight-fullscreen { overflow: hidden; }
 .simulator.is-fullscreen .flight-actions { gap: 5px; flex-wrap: nowrap; }
 .simulator.is-fullscreen .flight-status { margin-left: 0; }
 .simulator.is-fullscreen .flight-strip :is(.view-options, .source-control) { display: none; }
+@media (max-width: 760px) {
+  .simulator.is-fullscreen .course-progress { top: calc(clamp(150px, 38vw, 260px) * 9 / 16 + 28px); }
+  .simulator.is-fullscreen:is([data-layout=camera], [data-layout=observer]) .course-progress { top: 58px; }
+}
 @media (max-width: 760px) {
   .simulator.is-fullscreen .camera-column { width: clamp(150px, 38vw, 260px); }
   .simulator.is-fullscreen[data-layout=camera] .camera-column { width: 100%; }

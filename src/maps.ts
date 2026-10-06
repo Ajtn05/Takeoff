@@ -2,6 +2,7 @@ import { OBSTACLES, PAD, PRACTICE_BOUNDS, overlapsFootprint, pointInPolygon, typ
 import { FLAT_GROUND, terrainHeight, type GroundSampler, type TerrainGrid } from './terrain';
 import { barrelHeight, buildingModel, footprintCenter, pyramidHeight } from './landmarks';
 import { acaciaObstacle, campusTrees, type AcaciaTree } from './vegetation';
+import { PRACTICE_COURSES, PRACTICE_OBSTACLES } from './practice';
 
 export interface CampusFeature {
   id: number; kind: 'building' | 'road' | 'pitch' | 'green'; name: string; points: MapPoint[];
@@ -10,7 +11,7 @@ export interface CampusFeature {
 export interface CampusData { boundary: MapPoint[]; features: CampusFeature[]; trees: MapPoint[] }
 export interface PhotoSpot {
   id: string; name: string; pad: { x: number; z: number }; heading: number;
-  target: [number, number, number]; featureId?: number; tip: string;
+  target: [number, number, number]; featureId?: number; courseId?: string; tip: string;
 }
 export interface TrainingMap {
   id: 'park' | 'ateneo'; name: string; bounds: FlightBounds; obstacles: Obstacle[];
@@ -18,9 +19,11 @@ export interface TrainingMap {
   obstaclesWithoutTrees?: Obstacle[];
 }
 export const PRACTICE_MAP: TrainingMap = {
-  id: 'park', name: 'Practice park', bounds: PRACTICE_BOUNDS, obstacles: OBSTACLES, ground: FLAT_GROUND,
+  id: 'park', name: 'Practice park', bounds: PRACTICE_BOUNDS, obstacles: [...OBSTACLES, ...PRACTICE_OBSTACLES], ground: FLAT_GROUND,
   spots: [{ id: 'sculpture', name: 'Sculpture plaza', pad: PAD, heading: 0, target: [0, 3.5, -13],
-    tip: 'Practice hovering and framing the sculpture, then explore the larger park.' }],
+    tip: 'Practice hovering and framing the sculpture, or choose Hoop slalom, Window gaps, or Tight corridor from the route menu.' },
+    ...PRACTICE_COURSES.map(course => ({ id: course.id, courseId: course.id, name: course.name,
+      pad: course.pad, heading: course.heading, target: course.gates[0].center, tip: course.tip }))],
 };
 let campus: TrainingMap | undefined;
 export async function loadCampus(): Promise<TrainingMap> {

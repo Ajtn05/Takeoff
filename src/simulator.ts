@@ -8,6 +8,7 @@ import { bindFullscreen } from './fullscreen';
 import { flightObstacles, loadCampus, PRACTICE_MAP, type TrainingMap } from './maps';
 import { bindWorkspace } from './workspace';
 import { icon, setIconButton, type IconName } from './icons';
+import { advanceCourse, PRACTICE_COURSES } from './practice';
 import './workspace.css';
 
 const iconControl = (id: string, name: IconName, label: string, attributes = '', hint = label, classes = 'button quiet icon-control') =>
@@ -32,9 +33,9 @@ export async function mount(app: HTMLElement): Promise<void> {
       </header>
       <section class="map-strip" aria-label="Practice location">
         <label class="map-choice" title="Practice location">${icon('map')}<select id="map" aria-label="Choose a map"><option value="park">Practice park</option><option value="ateneo">Ateneo de Manila · Loyola Heights</option></select></label>
-        <label id="spot-control" class="map-choice" title="Launch location" hidden>${icon('pin')}<select id="photo-spot" aria-label="Choose a photo spot"></select></label>
+        <label id="spot-control" class="map-choice" title="Practice route">${icon('pin')}<select id="photo-spot" aria-label="Choose a practice route"></select></label>
         <label class="map-choice" title="Flight speed limit">${icon('speed')}<select id="flight-speed" aria-label="Flight speed limit"><option value="5">5 m/s</option><option value="10">10 m/s</option><option value="20" selected>20 m/s</option></select></label>
-        ${iconControl('map-tip', 'info', 'Location information', '', 'Practice hovering and framing the sculpture, then explore the larger park. 240 × 240 m · 60 m ceiling')}
+        ${iconControl('map-tip', 'info', 'Location information', '', 'Choose a practice route for hoops, wall gaps, or a tight covered corridor. 240 × 240 m · 60 m ceiling')}
         <span id="map-boundary" class="sr-only">240 × 240 m · 60 m ceiling</span>
       </section>
       <section class="workspace-bar" aria-label="Workspace layout">
@@ -47,6 +48,7 @@ export async function mount(app: HTMLElement): Promise<void> {
         ${iconControl('workspace-reset', 'reset', 'Reset workspace', '', 'Restore the default layout and instrument panel')}
       </section>
       <section id="stage" class="viewport-stage" aria-label="Flight workspace" data-layout="split" tabindex="-1">
+        <div id="course-progress" class="course-progress" role="status" aria-live="polite" aria-atomic="true" hidden><div><strong id="course-name"></strong><span id="course-count"></span></div><span id="course-next"></span></div>
         <div id="observer-view" class="observer-view view"><div class="view-heading"><span>Observer</span><select id="observer-mode" aria-label="Observer camera"><option value="fixed">Fixed view</option><option value="follow">Follow drone</option><option value="overview">Map overview</option></select></div></div>
         <div id="view-divider" class="view-divider" role="separator" tabindex="0" aria-label="Resize observer and camera views" aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75" aria-valuenow="62"><span></span></div>
         <aside id="camera-column" class="camera-column"><div class="camera-title"><span>Camera</span><span class="camera-spec" title="16:9 · 64° field of view · 1280 × 720 PNG captures" tabindex="0" aria-label="Camera specifications">${icon('info')}</span></div><div id="camera-view" class="camera-view view"><div id="thirds" class="thirds"><i></i><i></i><i></i><i></i></div><div class="camera-crosshair">+</div><div class="camera-caption"><span id="framing" tabindex="0" role="img" aria-label="Subject not framed" title="Subject not framed">${icon('frame')}</span></div></div></aside>
@@ -78,6 +80,19 @@ export async function mount(app: HTMLElement): Promise<void> {
   let obstacles = flightObstacles(activeMap, treesVisible);
   const profile = { ...GENERIC_PROFILE };
   let state = initialState(), paused = true, reason = 'Take off to begin.';
+  let course = PRACTICE_COURSES.find(route => route.id === spot.courseId), nextGate = 0;
+  const updateCourse = () => {
+    const panel = el('course-progress'); panel.hidden = !course;
+    panel.dataset.complete = String(Boolean(course && nextGate === course.gates.length));
+    if (!course) return;
+    el('course-name').textContent = course.name;
+    el('course-count').textContent = `${nextGate} / ${course.gates.length}`;
+    const gate = course.gates[nextGate];
+    el('course-next').textContent = gate
+      ? `Next: ${String(nextGate + 1).padStart(2, '0')} · ${(gate.center[1] - GROUND_HEIGHT).toFixed(1)} m AGL · ${gate.width.toFixed(1)} m opening`
+      : 'Course complete · Reset to fly again';
+    world.setCourseProgress(nextGate);
+  };
   let source: 'keyboard' | 'phone' = 'keyboard', connectedPhone = false;
   let socket: TrainerSocket | undefined, session: SessionInfo | undefined;
   let captures = 0, receiptToFrameMs = 0, renderedSequence = -1;
@@ -143,6 +158,7 @@ export async function mount(app: HTMLElement): Promise<void> {
   const resetFlight = (message: string) => {
     const collided = state.mode === 'collided';
     pause(message); state = initialState(spot.pad, spot.heading, activeMap.ground); world.resetTrail();
+    nextGate = 0; updateCourse();
     el('collision-prompt').hidden = true;
     if (collided) el('stage').focus({ preventScroll: true });
   };
@@ -170,19 +186,26 @@ export async function mount(app: HTMLElement): Promise<void> {
   el<HTMLSelectElement>('flight-speed').onchange = (event) => { profile.speed = Number((event.target as HTMLSelectElement).value); };
   el<HTMLInputElement>('gimbal').oninput = (event) => { if (source === 'keyboard') state.gimbal = Number((event.target as HTMLInputElement).value); };
   const applyMap = () => {
+    course = PRACTICE_COURSES.find(route => route.id === spot.courseId);
     world.setMap(activeMap, spot); resetFlight('Location changed. Take off when ready.');
     obstacles = flightObstacles(activeMap, treesVisible);
     el('trees').hidden = activeMap.id !== 'ateneo';
-    el('spot-control').hidden = el('map-credit').hidden = activeMap.id !== 'ateneo';
+    el('map-credit').hidden = activeMap.id !== 'ateneo';
     el('map-boundary').textContent = activeMap.id === 'ateneo' ? 'Loyola Heights campus · 80 m ceiling' : '240 × 240 m · 60 m ceiling';
     setMapTip(spot.tip);
-    world.follow = activeMap.id === 'ateneo'; world.overview = false;
+    world.follow = activeMap.id === 'ateneo' || Boolean(course); world.overview = false;
     el('stage').classList.remove('map-overview');
     el<HTMLSelectElement>('observer-mode').value = world.follow ? 'follow' : 'fixed';
-    const select = el<HTMLSelectElement>('photo-spot'); select.replaceChildren();
-    activeMap.spots.forEach((site) => { const option = document.createElement('option'); option.value = site.id; option.textContent = site.name; select.append(option); });
-    select.value = spot.id;
+    populateSpots();
   };
+  const populateSpots = () => {
+    const select = el<HTMLSelectElement>('photo-spot'); select.replaceChildren();
+    activeMap.spots.forEach(site => { const option = document.createElement('option'); option.value = site.id; option.textContent = site.name; select.append(option); });
+    select.value = spot.id;
+    select.setAttribute('aria-label', activeMap.id === 'park' ? 'Choose a practice route' : 'Choose a photo spot');
+    el('spot-control').title = activeMap.id === 'park' ? 'Practice route' : 'Launch location';
+  };
+  populateSpots(); setMapTip(spot.tip); updateCourse();
   el<HTMLSelectElement>('map').onchange = async (event) => {
     const select = event.target as HTMLSelectElement; const previous = activeMap;
     loadingMap = true; select.disabled = true; el<HTMLSelectElement>('photo-spot').disabled = true;
@@ -298,6 +321,7 @@ export async function mount(app: HTMLElement): Promise<void> {
     // Keep world meters per second consistent through slower frames; long stalls pause above.
     accumulator = paused ? 0 : Math.min(accumulator + elapsed / 1000, 0.25);
     while (accumulator >= 1 / 60) {
+      const before = { x: state.x, y: state.y, z: state.z }, wasFlying = state.mode === 'flying';
       stepFlight(state, source === 'phone' ? remote.controls : keyboard.read(), 1 / 60, profile, obstacles, activeMap.bounds, activeMap.ground); accumulator -= 1 / 60;
       if (state.mode === 'collided') {
         pause(`Collision with ${state.collision}. Reset the flight to try again.`);
@@ -305,6 +329,10 @@ export async function mount(app: HTMLElement): Promise<void> {
         el('collision-prompt').hidden = false;
         el('collision-reset').focus({ preventScroll: true });
         break;
+      }
+      if (course && wasFlying && state.mode === 'flying') {
+        const advanced = advanceCourse(course, nextGate, before, state);
+        if (advanced !== nextGate) { nextGate = advanced; updateCourse(); }
       }
     }
     world.update(state, paused ? 0 : now); world.render();

@@ -7,6 +7,7 @@ import { buildingModel } from './landmarks';
 import { createDrone } from './drone';
 import { campusRoadWidth } from './vegetation';
 import { campusMaterial } from './campus-materials';
+import { PRACTICE_COURSES } from './practice';
 
 export class TrainingWorld {
   readonly scene = new THREE.Scene();
@@ -30,6 +31,7 @@ export class TrainingWorld {
   private lastHeight = 0;
   private environment = new THREE.Group();
   private forest?: THREE.Group;
+  private courseMarkers = new Map<string, (THREE.Mesh | THREE.Line)[][]>();
   private treesVisible = true;
   private shadowPose: number[] = [];
   private lastShadowUpdate = 0;
@@ -97,13 +99,15 @@ export class TrainingWorld {
   private box(size: [number, number, number], color: string, position: [number, number, number], parent?: THREE.Object3D) {
     return this.mesh(new THREE.BoxGeometry(...size), color, position, parent);
   }
-  private label(text: string, position: [number, number, number], width = 5) {
+  private label(text: string, position: [number, number, number], width = 5, observerOnly = true) {
     const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 100;
     const ctx = canvas.getContext('2d')!;
     ctx.fillStyle = '#12282edd'; ctx.beginPath(); ctx.roundRect(0, 0, 512, 100, 18); ctx.fill();
     ctx.font = 'bold 32px sans-serif'; ctx.fillStyle = '#d8f3e8'; ctx.textAlign = 'center'; ctx.fillText(text, 256, 62);
-    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false }));
-    sprite.position.set(...position); sprite.scale.set(width, width / 5, 1); sprite.layers.set(2); this.environment.add(sprite);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: !observerOnly }));
+    // Labels are annotations, so camera direction and framing rays pass through them.
+    sprite.raycast = () => {};
+    sprite.position.set(...position); sprite.scale.set(width, width / 5, 1); sprite.layers.set(observerOnly ? 2 : 0); this.environment.add(sprite);
   }
   setMap(map: TrainingMap, spot: PhotoSpot): void {
     const disposedGeometry=new Set<THREE.BufferGeometry>();
@@ -124,7 +128,7 @@ export class TrainingWorld {
         materials.forEach((material) => material.dispose());
       }
     });
-    this.environment.clear(); this.forest = undefined; this.subject = new THREE.Group(); this.map = map; this.spot = spot;
+    this.environment.clear(); this.courseMarkers.clear(); this.forest = undefined; this.subject = new THREE.Group(); this.map = map; this.spot = spot;
     this.framingPose = []; this.shadowPose = []; this.aidPosition.set(NaN, NaN, NaN);
     this.renderer.shadowMap.needsUpdate = true;
     this.target.set(...spot.target); this.resetTrail();
@@ -173,6 +177,54 @@ export class TrainingWorld {
       this.box([0.15, 0.8, 0.5], '#626b61', [x - 0.8, 0.4, z]);
       this.box([0.15, 0.8, 0.5], '#626b61', [x + 0.8, 0.4, z]);
     }
+    this.buildCourses();
+    this.batchStaticMeshes(this.environment); this.batchStaticMeshes(this.subject);
+  }
+  private buildCourses() {
+    for (const course of PRACTICE_COURSES) {
+      const markers: (THREE.Mesh | THREE.Line)[][] = course.gates.map(() => []);
+      this.courseMarkers.set(course.id, markers);
+      for (const part of course.boxes) {
+        const mesh = this.box(part.size, part.accent ? course.color : '#728087', part.center);
+        mesh.rotation.y = -part.heading;
+        if (part.accent && part.gate !== undefined) { mesh.userData.noBatch = true; markers[part.gate].push(mesh); }
+      }
+      course.gates.forEach((gate, i) => {
+        const [x, y, z] = gate.center;
+        if (gate.kind === 'hoop') {
+          const hoop = this.mesh(new THREE.TorusGeometry(gate.radius!, gate.tube!, 10, 96), course.color, gate.center);
+          hoop.rotation.y = -gate.heading; hoop.userData.noBatch = true; markers[i].push(hoop);
+        } else if (gate.kind === 'passage') {
+          const w = gate.width / 2, h = gate.height / 2, c = Math.cos(gate.heading), s = Math.sin(gate.heading);
+          const points = [[-w, -h], [w, -h], [w, h], [-w, h], [-w, -h]]
+            .map(([right, up]) => new THREE.Vector3(x + right * c, y + up, z + right * s));
+          const outline = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: course.color }));
+          outline.layers.set(2); this.environment.add(outline); markers[i].push(outline);
+        }
+        // Gate numbers remain visible from the drone camera and with observer aids off.
+        const front = gate.kind === 'gap' ? 0.48 : 0;
+        this.label(String(i + 1).padStart(2, '0'), [x - Math.sin(gate.heading) * front,
+          gate.kind === 'passage' ? y + 0.65 : y + gate.height / 2 + 0.65, z + Math.cos(gate.heading) * front], 1.8, false);
+      });
+      const points = course.path ? course.path.map(point => new THREE.Vector3(...point))
+        : [new THREE.Vector3(course.pad.x, 3.065, course.pad.z), ...course.gates.map(gate => new THREE.Vector3(...gate.center))];
+      const route = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineDashedMaterial({ color: course.color, dashSize: 0.7, gapSize: 0.65, transparent: true, opacity: 0.65 }));
+      route.computeLineDistances(); route.layers.set(2); this.environment.add(route);
+      if (course.id !== this.spot.courseId) this.label(course.name.toUpperCase(), [course.pad.x, 1, course.pad.z + 3], 8);
+      const start = this.mesh(new THREE.CylinderGeometry(2.5, 2.5, 0.025, 32), course.color, [course.pad.x, 0.005, course.pad.z]);
+      start.castShadow = false;
+    }
+    this.setCourseProgress(0);
+  }
+  setCourseProgress(next: number): void {
+    for (const course of PRACTICE_COURSES) this.courseMarkers.get(course.id)?.forEach((markers, i) => {
+      const selected = course.id === this.spot.courseId;
+      const color = selected && i < next ? '#75c69b' : selected && i === next ? '#ffe6a0' : course.color;
+      markers.forEach(marker => {
+        if (marker instanceof THREE.Mesh) marker.material = this.material(color);
+        else (marker.material as THREE.LineBasicMaterial).color.set(color);
+      });
+    });
   }
   private buildPracticeAids() {
     const { x, z } = this.spot.pad;
@@ -196,10 +248,12 @@ export class TrainingWorld {
       this.box([0.08, 0.004, 1.1], '#e4d9ba', [x + 0.35, base + 0.005, z]);
       this.box([0.7, 0.004, 0.08], '#e4d9ba', [x, base + 0.005, z]);
     }
-    const markerPosition = translationMarker(this.spot, this.map.ground);
-    const marker = this.mesh(new THREE.TorusGeometry(1, 0.055, 8, 40), '#e6b95c', markerPosition);
-    marker.layers.set(2); this.label('02  ·  TRANSLATE', [markerPosition[0], markerPosition[1] + 2, markerPosition[2]]);
-    this.label('HOME', [x, base + 1.2, z + 2]);
+    if (!this.spot.courseId) {
+      const markerPosition = translationMarker(this.spot, this.map.ground);
+      const marker = this.mesh(new THREE.TorusGeometry(1, 0.055, 8, 40), '#e6b95c', markerPosition);
+      marker.layers.set(2); this.label('02  ·  TRANSLATE', [markerPosition[0], markerPosition[1] + 2, markerPosition[2]]);
+    }
+    if (!this.spot.courseId) this.label('HOME', [x, base + 1.2, z + 2]);
     if (this.map.id === 'park') this.label('PHOTO SUBJECT', [0, 6.2, -13]);
     const b = this.map.bounds;
     const points = (b.footprint ?? [[b.minX, b.minZ], [b.maxX, b.minZ], [b.maxX, b.maxZ], [b.minX, b.maxZ]])
@@ -315,6 +369,8 @@ export class TrainingWorld {
     } else if (this.map.id === 'ateneo') {
       this.observer.position.set(this.spot.pad.x + 80, this.map.ground(this.spot.pad.x, this.spot.pad.z) + 90, this.spot.pad.z + 100);
       this.observer.lookAt(...this.spot.target);
+    } else if (this.spot.courseId) {
+      this.observer.position.set(this.spot.pad.x + 18, 20, this.spot.pad.z + 22); this.observer.lookAt(...this.spot.target);
     } else { this.observer.position.set(27, 24, 34); this.observer.lookAt(0, 1, -5); }
     this.frustum.visible = this.direction.visible = this.trail.visible = this.aids;
     this.droneMarker.visible = this.aids && s.mode !== 'grounded';

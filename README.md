@@ -13,6 +13,7 @@ The observer view shows where the drone is going. The drone camera shows the res
 - **Photography:** tilt the stabilized camera, use the thirds grid, frame the orange sculpture, and download camera photos as PNGs.
 - **Coordinated movement:** use both phone sticks together for slow reveals and changes of viewpoint.
 - **Free flight:** take off, explore, reset a flight, and use fullscreen for more space.
+- **Obstacle routes:** follow a rising hoop slalom, thread progressively smaller wall gaps, or negotiate a covered corridor with two tight turns and a low beam. Numbered gates track your progress.
 - **Flexible workspace:** choose camera-only, observer-only, adjustable side-by-side or stacked views, or the Classic sidebar. Collapse and restyle the bottom flight instruments; workspace preferences are saved locally.
 - **Campus photography:** choose Ateneo de Manila's Loyola Heights campus and start near one of ten landmarks, or explore the expanded 240 × 240 m practice park.
 - **Speed and terrain:** fly up to 20 m/s, choose slower 5 or 10 m/s limits for framing, and practice over the campus's modeled elevation.
@@ -212,6 +213,18 @@ The **Flight** instrument panel is fixed to the bottom of the workspace; desktop
 ### Practice maps
 
 Use **Map** above the views to choose **Practice park** or **Ateneo de Manila · Loyola Heights**. The park has a **240 × 240 m** flight area and a **60 m** simulator ceiling. The campus follows its mapped boundary, approximately **930 × 1,590 m**, with an **80 m** simulator ceiling.
+
+In the park, the route menu offers **Sculpture plaza** for free flight and three obstacle courses:
+
+| Route | Challenge |
+| --- | --- |
+| Hoop slalom | Seven hoops with turns and altitude changes, rising to 9 m and descending again. Clear diameters shrink from 4.7 m to 2.3 m. |
+| Window gaps | Five walls with offset openings at different heights. The last window measures 1.6 × 1.6 m. |
+| Tight corridor | A covered passage with two right-angle turns, a low beam, and a 1.6 × 1.6 m exit. |
+
+Choose a route to start at its entrance, then select **Take off**. Start with the **5 m/s** speed limit; brake before turns and small openings. Fly through the numbered gates in order and in the direction of the route. The next gate is pale gold, cleared gates turn green, and the flight view shows the count and the next gate's altitude and opening width. Observer aids add a dashed route through the gate centers. Hoops, wall edges, roofs, and beams are solid obstacles and remain visible with aids off. **Reset flight** returns to the selected entrance and clears route progress. You can explore all three courses from free flight; selecting one enables its progress tracking.
+
+![Hoop slalom with numbered gates and route progress](docs/images/practice-routes.png)
 
 On the campus, **Photo spot** provides launch pads near the **Church of the Gesù, Areté, Rizal Library, Blue Eagle Gym, Manila Observatory, Science Education Complex, Horacio de la Costa Hall, Ricardo & Rosita Leong Hall, JG School of Management, and International Residence Halls**. Launch placement checks for an open view of the selected building from a 3 m hover. Pads and the amber exercise markers are simulator additions. Switching maps or spots pauses and resets the flight; existing photos remain in the gallery. Phone control must be enabled again after a location change. Reset returns to the selected spot.
 

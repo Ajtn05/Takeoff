@@ -85,12 +85,12 @@ test('campus trees toggle immediately and the preference survives location chang
   expect(errors).toEqual([]);
 });
 
-test('guide is removed; campus spots switch cleanly and preserve photos', async ({ page }) => {
+test('campus spots switch cleanly and preserve photos', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', (error) => errors.push(error.message));
-  await page.addInitScript(() => localStorage.setItem('trainer-guide-visible', 'true'));
   await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
-  await expect(page.locator('#practice-guide, #keyboard-guide, #guide-toggle, #lesson')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Guide', exact: true })).toBeVisible();
+  await expect(page.locator('#guide-dialog')).not.toBeVisible();
   await expect(page.locator('.photo-library')).toBeVisible();
   await page.locator('#map').selectOption('ateneo'); await expect(page.locator('#photo-spot')).toBeEnabled();
   await expect(page.locator('#photo-spot option')).toHaveCount(10);
@@ -181,16 +181,16 @@ test('phone pairing, simultaneous sticks, release, cancellation and disconnect p
     { id: 2, x: right.x + right.width * 0.7, y: right.y + right.height / 2 },
   ];
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points });
-  await expect(phone.locator('#left-value')).not.toHaveText('YAW 0% · CLIMB 0%');
-  await expect(phone.locator('#right-value')).not.toHaveText('RIGHT 0% · FORWARD 0%');
+  await expect(phone.locator('#left-value')).not.toHaveText('YAW 0% · THROTTLE 0%');
+  await expect(phone.locator('#right-value')).not.toHaveText('ROLL 0% · PITCH 0%');
   await phone.waitForTimeout(700);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await expect(phone.locator('#left-value')).toHaveText('YAW 0% · CLIMB 0%');
-  await expect(phone.locator('#right-value')).toHaveText('RIGHT 0% · FORWARD 0%');
+  await expect(phone.locator('#left-value')).toHaveText('YAW 0% · THROTTLE 0%');
+  await expect(phone.locator('#right-value')).toHaveText('ROLL 0% · PITCH 0%');
   await expect(page.locator('#flight-status')).toHaveAttribute('data-paused', 'false');
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [points[1]] });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
-  await expect(phone.locator('#right-value')).toHaveText('RIGHT 0% · FORWARD 0%');
+  await expect(phone.locator('#right-value')).toHaveText('ROLL 0% · PITCH 0%');
   await phone.screenshot({ path: 'test-results/controller.png', fullPage: true });
   await phoneContext.close();
   await expect(page.locator('#flight-status')).toHaveAttribute('data-paused', 'true');
@@ -366,7 +366,7 @@ test('fullscreen fills the window with flight views and restores desktop compone
   await page.locator('#aids').click();
   const root = page.locator('.simulator'), stage = page.locator('#stage'), panel = page.locator('#flight-panel');
   await page.locator('#simulator-fullscreen').click(); await expect(root).toHaveClass(/is-expanded/);
-  for (const selector of ['.topbar', '.map-strip', '.workspace-bar', '.photo-library', 'footer', '#source', '#quality', '#pair']) await expect(page.locator(selector)).toBeHidden();
+  for (const selector of ['.topbar', '.map-strip', '.workspace-bar', '.photo-library', '.simulator > footer', '#source', '#quality', '#pair']) await expect(page.locator(selector)).toBeHidden();
   const workspace = (await stage.boundingBox())!, observer = (await page.locator('#observer-view').boundingBox())!, camera = (await page.locator('#camera-view').boundingBox())!;
   expect(workspace).toEqual({ x: 0, y: 0, width: 1440, height: 900 });
   expect(observer).toEqual(workspace);

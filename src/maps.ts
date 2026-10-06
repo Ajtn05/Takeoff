@@ -3,6 +3,7 @@ import { FLAT_GROUND, terrainHeight, type GroundSampler, type TerrainGrid } from
 import { barrelHeight, buildingModel, footprintCenter, pyramidHeight } from './landmarks';
 import { acaciaObstacle, campusTrees, type AcaciaTree } from './vegetation';
 import { PRACTICE_COURSES, PRACTICE_OBSTACLES } from './practice';
+import { RALLY_BOUNDS, RALLY_PAD, rallyPose } from './rally';
 
 export interface CampusFeature {
   id: number; kind: 'building' | 'road' | 'pitch' | 'green'; name: string; points: MapPoint[];
@@ -14,7 +15,7 @@ export interface PhotoSpot {
   target: [number, number, number]; featureId?: number; courseId?: string; tip: string;
 }
 export interface TrainingMap {
-  id: 'park' | 'ateneo'; name: string; bounds: FlightBounds; obstacles: Obstacle[];
+  id: 'park' | 'ateneo' | 'rally'; name: string; bounds: FlightBounds; obstacles: Obstacle[];
   spots: PhotoSpot[]; data?: CampusData; terrain?: TerrainGrid; trees?: AcaciaTree[]; ground: GroundSampler;
   obstaclesWithoutTrees?: Obstacle[];
 }
@@ -24,6 +25,13 @@ export const PRACTICE_MAP: TrainingMap = {
     tip: 'Practice hovering and framing the sculpture, or choose Hoop slalom, Window gaps, or Tight corridor from the route menu.' },
     ...PRACTICE_COURSES.map(course => ({ id: course.id, courseId: course.id, name: course.name,
       pad: course.pad, heading: course.heading, target: course.gates[0].center, tip: course.tip }))],
+};
+const rallyStart = rallyPose(0);
+export const RALLY_MAP: TrainingMap = {
+  id: 'rally', name: 'Rally circuit', bounds: RALLY_BOUNDS, obstacles: [], ground: FLAT_GROUND,
+  spots: [{ id: 'rally-tracking', name: 'Rally tracking', pad: RALLY_PAD,
+    heading: Math.atan2(rallyStart.x - RALLY_PAD.x, RALLY_PAD.z - rallyStart.z), target: [rallyStart.x, 0.95, rallyStart.z],
+    tip: 'Take off to start the car. Track it around a gravel circuit at 10–22 m/s (36–79 km/h), slowing for hairpins. Climb to 10–20 m for a wider view; use yaw and camera tilt to keep it framed. The panel measures airborne time in frame and your tracking streak. Pause freezes the car; Reset restarts the lap.' }],
 };
 let campus: TrainingMap | undefined;
 export async function loadCampus(): Promise<TrainingMap> {

@@ -112,7 +112,7 @@ export class SessionRelay {
   private fromController(s: Session, msg: ClientMessage): void {
     if (msg.type === 'resume' && msg.generation === s.generation && s.host && this.now() - s.lastHostAt <= HOST_TIMEOUT_MS) {
       s.generation++; s.ready = true; s.lastSeq = -1; s.lastInputAt = this.now(); s.actions.clear();
-      this.notify(s, 'Controls ready. Take off, or resume practice on the laptop.'); return;
+      this.notify(s, 'Controls ready. Take off, or tap Resume game on the phone.'); return;
     }
     if (!s.ready || !('generation' in msg) || msg.generation !== s.generation) return;
     if (this.now() - s.lastInputAt > INPUT_TIMEOUT_MS || this.now() - s.lastHostAt > HOST_TIMEOUT_MS) {

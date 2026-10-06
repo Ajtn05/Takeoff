@@ -73,13 +73,16 @@ test('250 ms stale-input pause invalidates generation and requires a new neutral
 test('actions are acknowledged once and retry returns the cached result', async () => {
   const f = await fixture();
   try {
-    const request: ClientMessage = { type: 'action', generation: f.generation, id: 'photo_1', action: 'capture' };
-    f.phone.send(request); f.phone.send(request);
-    await f.host.wait((m) => m.type === 'action');
-    f.host.send({ type: 'ack', generation: f.generation, id: 'photo_1', ok: true, message: 'Photo saved' });
-    await f.phone.wait((m) => m.type === 'ack'); f.phone.send(request);
-    const cached = await f.phone.wait((m) => m.type === 'ack') as Extract<ServerMessage, { type: 'ack' }>;
-    assert.ok(cached.ok); assert.equal(f.host.messages.filter((m) => m.type === 'action').length, 0);
+    for (const action of ['capture', 'resume'] as const) {
+      const id = `${action}_1`, request: ClientMessage = { type: 'action', generation: f.generation, id, action };
+      f.phone.send(request); f.phone.send(request);
+      const forwarded = await f.host.wait((m) => m.type === 'action') as Extract<ServerMessage, { type: 'action' }>;
+      assert.equal(forwarded.action, action);
+      f.host.send({ type: 'ack', generation: f.generation, id, ok: true, message: 'Action completed' });
+      await f.phone.wait((m) => m.type === 'ack'); f.phone.send(request);
+      const cached = await f.phone.wait((m) => m.type === 'ack') as Extract<ServerMessage, { type: 'ack' }>;
+      assert.ok(cached.ok); assert.equal(cached.id, id); assert.equal(f.host.messages.filter((m) => m.type === 'action').length, 0);
+    }
   } finally { await f.close(); }
 });
 test('controller disconnection pauses, reconnecting rotates generation, and revocation rejects old link', async () => {

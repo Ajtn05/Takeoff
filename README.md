@@ -1,6 +1,6 @@
 # Drone simulator
 
-Practice camera-drone flight and photo composition on your laptop. Fly with the keyboard or use a phone as a two-stick Mode 2 controller. A hosted deployment supports wireless pairing over Wi-Fi or mobile data; the local version also supports Android USB and local Wi-Fi.
+Practice camera-drone flight and photo composition on your laptop. Fly with the keyboard or use a phone as a two-stick controller with DJI Modes 1, 2, and 3. Mode 2 is the default. A hosted deployment supports wireless pairing over Wi-Fi or mobile data; the local version also supports Android USB and local Wi-Fi.
 
 The observer view shows where the drone is going. The drone camera shows the resulting composition. Use both to learn how heading, movement, and camera tilt affect a shot, then switch to **Camera only** to practice framing without the observer view.
 
@@ -14,11 +14,15 @@ The observer view shows where the drone is going. The drone camera shows the res
 - **Coordinated movement:** use both phone sticks together for slow reveals and changes of viewpoint.
 - **Free flight:** take off, explore, reset a flight, and use fullscreen for more space.
 - **Obstacle routes:** follow a rising hoop slalom, thread progressively smaller wall gaps, or negotiate a covered corridor with two tight turns and a low beam. Numbered gates track your progress.
+- **Moving-subject tracking:** follow a rally car around a gravel circuit with fast straights, S bends, and hairpins. Practice yaw and camera tilt with live time-in-frame and tracking-streak feedback.
 - **Flexible workspace:** choose camera-only, observer-only, adjustable side-by-side or stacked views, or the Classic sidebar. Collapse and restyle the bottom flight instruments; workspace preferences are saved locally.
+- **In-app guide:** the labeled **Guide** button covers startup, keyboard and phone controls, connections, and workspace layout, including in fullscreen.
+- **Adjustable observer:** orbit, pan, and zoom the fixed viewpoint, then return to it after using Follow or Overview.
+- **Drone tuning:** adjust flight and camera response, or start from DJI Mini 4 Pro, Air 3, and Mavic 3 Classic presets. Applied settings are saved locally.
 - **Campus photography:** choose Ateneo de Manila's Loyola Heights campus and start near one of ten landmarks, or explore the expanded 240 × 240 m practice park.
 - **Speed and terrain:** fly up to 20 m/s, choose slower 5 or 10 m/s limits for framing, and practice over the campus's modeled elevation.
 
-This is a working prototype with a practice park, a simplified Ateneo campus map, and a generic assisted-flight profile. Learners need no account or phone app. The hosted version opens from a link with no installation. The local version works without internet after dependencies and the app are installed and built. Campus geometry is bundled with the app.
+This is a working prototype with a practice park, a simplified Ateneo campus map, and adjustable assisted-flight profiles. Learners need no account or phone app. The hosted version opens from a link with no installation. The local version works without internet after dependencies and the app are installed and built. Campus geometry is bundled with the app.
 
 [Open a hosted version](#open-a-hosted-version) · [Host your own](docs/HOSTING.md) · [Run locally](#get-started) · [Pair a phone](#pair-an-android-phone) · [Controls](#controls) · [Troubleshooting](#troubleshooting) · [Development](#development)
 
@@ -96,7 +100,7 @@ USB pairing bypasses the Wi-Fi network. The local server still runs on the Mac, 
 4. On the laptop, select **Pair phone**, choose **USB cable · no Wi-Fi**, and select **Connect USB phone**.
 5. Wait for **USB connection ready**. Scan the QR code with the phone's camera or open the complete **Open on phone** URL in its browser, including the part after `#`.
 6. Rotate the phone to landscape. Leave both sticks centered and select **Enable controls**.
-7. Close the laptop pairing dialog. Pairing automatically selects **Phone · Mode 2** as the control source.
+7. Close the laptop pairing dialog. Pairing automatically selects **Phone** as the control source.
 8. Select **Take off** on either device to begin flying.
 
 The app finds ADB through `PATH`, the usual macOS Android SDK location, `ANDROID_HOME`, `ANDROID_SDK_ROOT`, or `ADB_PATH`. If it cannot find a separately downloaded copy, start the server with its absolute path, for example:
@@ -149,7 +153,7 @@ Allow the local Node server through the Mac firewall if prompted. Guest or class
 
 ### Pausing, resuming, and changing phones
 
-**Pause controls** on the phone disables its input and pauses the flight. To continue, center the sticks and select **Enable controls** on the phone. If the drone is grounded, select **Take off** on either device; if it is airborne, select **Start practice** on the laptop. Use this same sequence after a cable disconnect, connection loss, or either page being hidden.
+**Pause controls** on the phone disables its input and pauses the flight. The phone shows a **Game paused** prompt during an interrupted flight. To continue, center the sticks and select **Enable controls**, then **Resume game** on the phone. If the drone is grounded, select **Take off** on either device. **Start practice** on the laptop also resumes flight. Use this same sequence after a cable disconnect, connection loss, or either page being hidden. Return to the laptop page and close any open dialogs before resuming; a collision requires **Reset flight** on the laptop.
 
 Keep the phone awake. The controller requests a screen wake lock where supported; if it says **Set screen timeout manually**, adjust the phone's timeout. Plain HTTP over Wi-Fi cannot use this feature. **Fullscreen** on the phone hides browser controls where supported, and **Stick size** adjusts the touch areas.
 
@@ -159,7 +163,17 @@ To return to keyboard practice, choose **Keyboard** in the laptop's **Controls**
 
 ## Controls
 
-Mode 2 puts altitude and heading on the left stick, with forward and sideways movement on the right stick.
+The phone's **Stick mode** menu follows the layouts in [DJI's remote controller guide](https://developer.dji.com/mobile-sdk/documentation/introduction/component-guide-remotecontroller.html). **Mode 2** is the default. The selected mode is saved in the phone browser. Changing it centers both sticks and pauses controls; select **Enable controls**, then take off from the ground or tap **Resume game** on the phone.
+
+| Stick mode | Left stick up / down | Left stick left / right | Right stick up / down | Right stick left / right |
+| --- | --- | --- | --- | --- |
+| Mode 1 | Pitch | Yaw | Throttle | Roll |
+| Mode 2 · Default | Throttle | Yaw | Pitch | Roll |
+| Mode 3 | Pitch | Roll | Throttle | Yaw |
+
+Throttle commands climb / descent, yaw turns the drone, pitch commands forward / backward movement, and roll commands sideways movement in this assisted-flight simulator. DJI's Mobile SDK mobile remote controller itself supports only Mode 2; Modes 1 and 3 here are simulator practice layouts.
+
+The action table below uses Mode 2.
 
 | Action | Phone | Keyboard |
 | --- | --- | --- |
@@ -170,21 +184,25 @@ Mode 2 puts altitude and heading on the left stick, with forward and sideways mo
 | Tilt camera up / down | Hold the Tilt buttons | R / F, or Camera tilt slider |
 | Take off / land | Take off / Land buttons | T / L |
 | Take a photo | Camera shutter button | C |
-| Pause | Pause controls | Space |
+| Pause / resume | Pause controls / Enable controls, then Resume game | Space |
 
 Movement follows the drone's heading. When the drone faces you, its rightward movement appears leftward in the fixed observer view. Releasing the sticks or movement keys commands a stop, with a short braking response into hover.
 
-**Speed limit** selects **5 m/s · Fine control**, **10 m/s · Cruise**, or **20 m/s · Fast flight**. Maximum horizontal speed includes diagonal movement. Acceleration is limited to 5 m/s² and braking to 8 m/s², so full-speed flight takes about four seconds to accelerate and 25 m to stop with centered sticks. Climb and descent are limited to 5 m/s; automatic takeoff and landing are slower.
+**Speed limit** offers 5 m/s, 10 m/s, and the configured drone's maximum, omitting caps above that maximum. This temporary cap does not change your saved drone settings. Maximum horizontal speed includes diagonal movement. The default trainer flies at up to 20 m/s, accelerates at 5 m/s², and brakes at 8 m/s², taking about four seconds to accelerate and 25 m to stop from full speed with centered sticks. Its manual climb and descent limits are 5 m/s; automatic takeoff and landing are slower.
+
+The sliders icon beside **Guide** opens **Drone parameters**. Choose the trainer, a commercial preset, or **Custom**, then adjust horizontal speed, independent climb and descent speeds, turn speed, acceleration, braking, camera tilt speed, and vertical field of view. **Apply settings** updates the simulation and saves the configuration in this browser. **Cancel** discards the draft, and **Restore trainer defaults** fills the draft with the original profile. Opening setup or the guide pauses flight; close the dialog and explicitly resume when ready.
+
+Commercial presets use the manufacturers' published maximum horizontal, ascent, and descent speeds: [DJI Mini 4 Pro](https://www.dji.com/mini-4-pro/specs), [DJI Air 3](https://www.dji.com/air-3/specs), and [DJI Mavic 3 Classic](https://www.dji.com/mavic-3-classic/specs). Turn rate, acceleration, and braking are simulator estimates. Camera settings and aircraft size retain the trainer defaults; these presets approximate assisted flight rather than reproducing a complete aircraft. Preset maximum speeds do not incorporate regional firmware limits.
 
 The drone body banks during movement while the camera horizon stays level. Turning the drone changes camera heading; gimbal tilt changes its vertical angle independently. Takeoff and landing are automatic maneuvers; movement input resumes after takeoff finishes.
 
-Keyboard flight requires focus on the simulator, away from menus and sliders. The laptop's camera-tilt slider is disabled while **Phone · Mode 2** is selected.
+Keyboard flight requires focus on the simulator, away from menus and sliders. The laptop's camera-tilt slider is disabled while **Phone** is selected.
 
 ### Views and flight information
 
 | Setting | Use it to |
 | --- | --- |
-| Fixed view | Compare the drone's heading and movement from one viewpoint. |
+| Fixed view | Drag to orbit, Shift-drag or right-drag to pan, and scroll to zoom. The viewpoint stays where you leave it. On touch screens, use one finger to orbit and two fingers to pan or pinch to zoom. |
 | Follow drone | Keep the observer camera near the drone as it moves. |
 | Map overview | See the whole selected map from above, with north toward the top. |
 | Observer aids | Show the ground grid, labels, flight trail, camera direction, and field-of-view outline. |
@@ -200,9 +218,13 @@ Keyboard flight requires focus on the simulator, away from menus and sliders. Th
 
 Select **Exit fullscreen** or press **Escape** to return to the normal layout. If native fullscreen is unavailable, the simulator expands within the browser panel instead.
 
-Fullscreen hides the title, location and layout bars, display settings, control-source selector, photos, and performance footer. When both views are active, the observer fills the screen and the 16:9 camera becomes an inset in the upper right. Camera-only and observer-only layouts keep their selected view. The floating console retains reset, play/pause, takeoff, landing, capture, flight status, and exit. Instruments start compact and can be expanded; exiting restores the desktop layout and instrument state. [Fullscreen preview](docs/images/fullscreen.png).
+Fullscreen hides the title, location and layout bars, display settings, control-source selector, photos, and performance footer. When both views are active, the observer fills the screen and the 16:9 camera becomes an inset in the upper right. Camera-only and observer-only layouts keep their selected view. The floating console retains reset, play/pause, takeoff, landing, capture, flight status, exit, **Guide**, and drone parameters. Instruments start compact and can be expanded; exiting restores the desktop layout and instrument state. [Fullscreen preview](docs/images/fullscreen.png).
 
 Desktop controls use icons in separate modules with raised buttons and recessed readouts. Hover or focus a control for its name and keyboard shortcut; display toggles are highlighted when active. The play/pause button starts or pauses practice. Flight status appears once in the layout bar, or in the floating fullscreen console; hover or focus it for the pause reason. A collision shows a persistent **Reset flight** prompt that returns the drone to the launch point. Location hints and camera specifications are available from the information icons.
+
+**Guide** is the labeled exception to the icon toolbar. Its Startup, Controls, Connection, and Layout tabs explain the station and include an **Open pairing** shortcut. The guide and parameter dialogs stay accessible on narrow screens and in fullscreen. Escape closes a dialog first, preserving expanded fullscreen.
+
+The fixed observer also supports keyboard adjustment: focus the observer and use **Alt + arrows** to pan, **Alt + Shift + arrows** to orbit, and **Alt + plus/minus** to zoom. Unmodified arrow keys still fly the drone. **Reset fixed view** beside the camera menu restores the launch viewpoint. Switching to Follow or Overview and back preserves your adjustments; changing the map or launch location resets the viewpoint for that location.
 
 The layout icons select the viewing arrangement. **Equalize views** gives both views equal space; **Reset workspace** restores the default side-by-side layout and instrument settings. The drone camera keeps a 16:9 frame as the views resize, matching exported photos.
 
@@ -212,7 +234,7 @@ The **Flight** instrument panel is fixed to the bottom of the workspace; desktop
 
 ### Practice maps
 
-Use **Map** above the views to choose **Practice park** or **Ateneo de Manila · Loyola Heights**. The park has a **240 × 240 m** flight area and a **60 m** simulator ceiling. The campus follows its mapped boundary, approximately **930 × 1,590 m**, with an **80 m** simulator ceiling.
+Use **Map** above the views to choose **Practice park**, **Rally circuit · Tracking**, or **Ateneo de Manila · Loyola Heights**. The park has a **240 × 240 m** flight area and a **60 m** simulator ceiling. The rally stage has a **340 × 280 m** flight area and the same **60 m** ceiling. The campus follows its mapped boundary, approximately **930 × 1,590 m**, with an **80 m** simulator ceiling.
 
 In the park, the route menu offers **Sculpture plaza** for free flight and three obstacle courses:
 
@@ -225,6 +247,8 @@ In the park, the route menu offers **Sculpture plaza** for free flight and three
 Choose a route to start at its entrance, then select **Take off**. Start with the **5 m/s** speed limit; brake before turns and small openings. Fly through the numbered gates in order and in the direction of the route. The next gate is pale gold, cleared gates turn green, and the flight view shows the count and the next gate's altitude and opening width. Observer aids add a dashed route through the gate centers. Hoops, wall edges, roofs, and beams are solid obstacles and remain visible with aids off. **Reset flight** returns to the selected entrance and clears route progress. You can explore all three courses from free flight; selecting one enables its progress tracking.
 
 ![Hoop slalom with numbered gates and route progress](docs/images/practice-routes.png)
+
+Choose **Rally circuit · Tracking** to practice keeping a moving subject in frame. An orange rally car follows a closed gravel circuit at **10–22 m/s (36–79 km/h)**, slowing for hairpins and accelerating along the straights. The car starts when the drone finishes taking off. Climb to **10–20 m** for a wider view, then use movement, yaw, and camera tilt to frame it; a **20 m/s** flight limit helps when following it. The tracking panel shows the current lap and car speed, the percentage of airborne practice time the car is in frame, and the current and best uninterrupted framing streaks. Framing uses the visible car as its subject and checks for occlusion. The car is a collision obstacle. Pausing freezes its position and statistics; landing stops it, and **Reset flight** resets the car, drone, and tracking statistics. Camera-only, fullscreen, phone controls, and photo capture also work in this stage.
 
 On the campus, **Photo spot** provides launch pads near the **Church of the Gesù, Areté, Rizal Library, Blue Eagle Gym, Manila Observatory, Science Education Complex, Horacio de la Costa Hall, Ricardo & Rosita Leong Hall, JG School of Management, and International Residence Halls**. Launch placement checks for an open view of the selected building from a 3 m hover. Pads and the amber exercise markers are simulator additions. Switching maps or spots pauses and resets the flight; existing photos remain in the gallery. Phone control must be enabled again after a location change. Reset returns to the selected spot.
 
@@ -257,16 +281,16 @@ The gallery keeps the six most recent captures in memory. **Download any photos 
 | No USB debugging prompt | Check `adb devices`. A device listed as `device` is already authorized and needs no new prompt. If it says `unauthorized`, unlock the phone, reconnect the cable, and check USB debugging. |
 | ADB is missing or no phone is found | Install Platform-Tools or set `ADB_PATH`. Check USB debugging and try a data-capable cable. If several USB devices are attached, leave only the intended phone connected. |
 | No Wi-Fi option, or Wi-Fi will not connect | Start with `npm run start:lan`, reload the laptop page, and pair using its Wi-Fi URL. Check the chosen network address and firewall. Networks with client isolation may require USB instead. |
-| Paired, but the sticks do nothing | Select **Enable controls** on the phone, then **Start practice** on the laptop. Confirm **Controls** is set to **Phone · Mode 2** and that takeoff has finished. |
+| Paired, but the sticks do nothing | Select **Enable controls** on the phone, then **Resume game** for an interrupted flight or **Take off** from the ground. Confirm **Controls** is set to **Phone** and that takeoff has finished. |
 | Keyboard keys do nothing | Select **Keyboard**, start practice, and return focus from a menu or slider to the simulator. |
-| Flight pauses after switching tabs or disconnecting | Return to both pages. For phone control, select **Enable controls**, then **Start practice** on the laptop. For keyboard control, select **Start practice**. |
+| Flight pauses after switching tabs or disconnecting | Return to both pages and close open laptop dialogs. For phone control, select **Enable controls**, then **Resume game** on the phone. For keyboard control, select **Start practice** on the laptop. |
 | Collision prevents resuming | Select **Reset**. For phone control, enable its controls again before selecting **Start practice**. |
 | Pairing link is rejected or another phone is connected | Select **Revoke phone & renew link** and pair using the new code. |
 | Rendering is slow | Enable **Low graphics** and close other demanding applications. If the browser reports a lost graphics context, reload and pair again. |
 
 ## Current scope
 
-The flight model approximates an assisted camera drone using bounded speed, acceleration, braking, yaw, and gimbal tilt. It does not model motors or aerodynamics. Touch sticks differ from a physical controller, and the profile is not tied to a specific drone model.
+The flight model approximates an assisted camera drone using bounded speed, acceleration, braking, yaw, and gimbal tilt. It does not model motors or aerodynamics. Touch sticks differ from a physical controller. Commercial presets use published speed limits and approximate handling; aircraft shape, collision envelope, wind, battery, and obstacle avoidance are not specific to each commercial model.
 
 Wind, battery behavior, obstacle avoidance, gamepad input, exposure controls, video recording, and a persistent gallery are not implemented. Colliding with a building, mapped tree, sculpture, ground, or practice boundary stops the exercise and requires a reset. Campus building collisions follow their footprints so open courtyards remain accessible.
 

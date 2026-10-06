@@ -1,14 +1,17 @@
 import QRCode from 'qrcode';
 import { neutralControls, type Action, type ServerMessage, type SessionInfo, type Telemetry } from '../shared/protocol';
 import { KeyboardInput, RemoteInput } from './input';
-import { initialState, stepFlight, takeoff, land, GENERIC_PROFILE, GROUND_HEIGHT } from './simulation';
+import { initialState, stepFlight, takeoff, land, GROUND_HEIGHT } from './simulation';
 import { TrainerSocket } from './socket';
 import { TrainingWorld } from './world';
 import { bindFullscreen } from './fullscreen';
-import { flightObstacles, loadCampus, PRACTICE_MAP, type TrainingMap } from './maps';
+import { flightObstacles, loadCampus, PRACTICE_MAP, RALLY_MAP, type TrainingMap } from './maps';
 import { bindWorkspace } from './workspace';
 import { icon, setIconButton, type IconName } from './icons';
 import { advanceCourse, PRACTICE_COURSES } from './practice';
+import { assistanceDialogs, bindAssistance } from './assistance';
+import { defaultDroneSettings, parseDroneSettings, PROFILE_STORAGE_KEY, DRONE_PRESETS, type DroneSettings } from './profiles';
+import { advanceRally, initialRallySession, rallyCarObstacle, rallyPose, recordTracking, type RallySession } from './rally';
 import './workspace.css';
 
 const iconControl = (id: string, name: IconName, label: string, attributes = '', hint = label, classes = 'button quiet icon-control') =>
@@ -29,13 +32,17 @@ export async function mount(app: HTMLElement): Promise<void> {
           ${iconControl('simulator-fullscreen', 'fullscreen', 'Fullscreen', 'aria-pressed="false"')}
           ${iconControl('pair', 'phone', 'Pair phone')}
           </div>
+          <div id="assistance-controls" class="control-module" role="group" aria-label="Help and drone setup">
+            ${iconControl('drone-parameters', 'tune', 'Drone parameters', 'aria-haspopup="dialog" aria-controls="drone-dialog"')}
+            <button id="guide" class="button quiet guide-button" aria-haspopup="dialog" aria-controls="guide-dialog">${icon('guide')}<span>Guide</span></button>
+          </div>
         </div>
       </header>
       <section class="map-strip" aria-label="Practice location">
-        <label class="map-choice" title="Practice location">${icon('map')}<select id="map" aria-label="Choose a map"><option value="park">Practice park</option><option value="ateneo">Ateneo de Manila · Loyola Heights</option></select></label>
+        <label class="map-choice" title="Practice location">${icon('map')}<select id="map" aria-label="Choose a map"><option value="park">Practice park</option><option value="rally">Rally circuit · Tracking</option><option value="ateneo">Ateneo de Manila · Loyola Heights</option></select></label>
         <label id="spot-control" class="map-choice" title="Practice route">${icon('pin')}<select id="photo-spot" aria-label="Choose a practice route"></select></label>
         <label class="map-choice" title="Flight speed limit">${icon('speed')}<select id="flight-speed" aria-label="Flight speed limit"><option value="5">5 m/s</option><option value="10">10 m/s</option><option value="20" selected>20 m/s</option></select></label>
-        ${iconControl('map-tip', 'info', 'Location information', '', 'Choose a practice route for hoops, wall gaps, or a tight covered corridor. 240 × 240 m · 60 m ceiling')}
+        ${iconControl('map-tip', 'info', 'Location information', '', 'Choose a park obstacle route, or the Rally circuit map to track a moving car. 240 × 240 m · 60 m ceiling')}
         <span id="map-boundary" class="sr-only">240 × 240 m · 60 m ceiling</span>
       </section>
       <section class="workspace-bar" aria-label="Workspace layout">
@@ -49,7 +56,7 @@ export async function mount(app: HTMLElement): Promise<void> {
       </section>
       <section id="stage" class="viewport-stage" aria-label="Flight workspace" data-layout="split" tabindex="-1">
         <div id="course-progress" class="course-progress" role="status" aria-live="polite" aria-atomic="true" hidden><div><strong id="course-name"></strong><span id="course-count"></span></div><span id="course-next"></span></div>
-        <div id="observer-view" class="observer-view view"><div class="view-heading"><span>Observer</span><select id="observer-mode" aria-label="Observer camera"><option value="fixed">Fixed view</option><option value="follow">Follow drone</option><option value="overview">Map overview</option></select></div></div>
+        <div id="observer-view" class="observer-view view" aria-label="Observer view" aria-describedby="fixed-view-hint"><div class="view-heading"><span>Observer</span><div class="observer-tools"><select id="observer-mode" aria-label="Observer camera"><option value="fixed">Fixed view</option><option value="follow">Follow drone</option><option value="overview">Map overview</option></select>${iconControl('observer-reset', 'reset', 'Reset fixed view', '', 'Restore the launch viewpoint')}</div></div><p id="fixed-view-hint" class="fixed-view-hint">Drag to orbit · Shift-drag to pan · Scroll to zoom</p></div>
         <div id="view-divider" class="view-divider" role="separator" tabindex="0" aria-label="Resize observer and camera views" aria-orientation="vertical" aria-valuemin="25" aria-valuemax="75" aria-valuenow="62"><span></span></div>
         <aside id="camera-column" class="camera-column"><div class="camera-title"><span>Camera</span><span class="camera-spec" title="16:9 · 64° field of view · 1280 × 720 PNG captures" tabindex="0" aria-label="Camera specifications">${icon('info')}</span></div><div id="camera-view" class="camera-view view"><div id="thirds" class="thirds"><i></i><i></i><i></i><i></i></div><div class="camera-crosshair">+</div><div class="camera-caption"><span id="framing" tabindex="0" role="img" aria-label="Subject not framed" title="Subject not framed">${icon('frame')}</span></div></div></aside>
         <section id="flight-panel" class="flight-panel is-glass" aria-label="Flight parameters">
@@ -58,12 +65,13 @@ export async function mount(app: HTMLElement): Promise<void> {
         </section>
         <section id="collision-prompt" class="collision-prompt" role="alertdialog" aria-modal="false" aria-labelledby="collision-title" aria-describedby="collision-details" hidden><div class="collision-heading">${icon('warning')}<h2 id="collision-title">Collision</h2></div><p id="collision-details"></p><button id="collision-reset" class="button">${icon('reset')}<span>Reset flight</span></button></section>
       </section>
-      <section id="flight-console" class="flight-strip"><div class="flight-actions control-module" role="group" aria-label="Flight actions">${iconControl('takeoff', 'takeoff', 'Take off', 'disabled', 'Take off · T')}${iconControl('land', 'land', 'Land', 'disabled', 'Land · L')}<span class="action-divider"></span>${iconControl('capture', 'camera', 'Capture photo', 'disabled', 'Capture photo · C', 'button shutter icon-control')}</div><div class="view-options control-module" role="group" aria-label="Display options">${iconControl('aids', 'aids', 'Observer aids', 'aria-pressed="true"')}${iconControl('grid', 'grid', 'Thirds grid', 'aria-pressed="true"')}${iconControl('trees', 'tree', 'Campus trees', 'aria-pressed="true" hidden', 'Show or hide campus trees')}${iconControl('quality', 'quality', 'Low graphics', 'aria-pressed="false"')}</div><label class="source-control control-module"><span class="sr-only">Controls</span><select id="source" aria-label="Control source"><option value="keyboard">Keyboard</option><option value="phone">Phone · Mode 2</option></select></label></section>
+      <section id="flight-console" class="flight-strip"><div class="flight-actions control-module" role="group" aria-label="Flight actions">${iconControl('takeoff', 'takeoff', 'Take off', 'disabled', 'Take off · T')}${iconControl('land', 'land', 'Land', 'disabled', 'Land · L')}<span class="action-divider"></span>${iconControl('capture', 'camera', 'Capture photo', 'disabled', 'Capture photo · C', 'button shutter icon-control')}</div><div class="view-options control-module" role="group" aria-label="Display options">${iconControl('aids', 'aids', 'Observer aids', 'aria-pressed="true"')}${iconControl('grid', 'grid', 'Thirds grid', 'aria-pressed="true"')}${iconControl('trees', 'tree', 'Campus trees', 'aria-pressed="true" hidden', 'Show or hide campus trees')}${iconControl('quality', 'quality', 'Low graphics', 'aria-pressed="false"')}</div><label class="source-control control-module"><span class="sr-only">Controls</span><select id="source" aria-label="Control source"><option value="keyboard">Keyboard</option><option value="phone">Phone</option></select></label></section>
       <section class="photo-library" aria-label="Photo gallery"><span class="section-label">Photos <span id="photo-count">0</span></span><div id="photos"><span class="empty-photos">No photos.</span></div></section>
       <p id="map-credit" class="map-credit" hidden>1:1 meter scale · 30 m elevation data, smoothed · building details and satellite tree placement estimated. Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a> · <a href="/data/ateneo-campus.json" download>Campus data (ODbL)</a> · elevation courtesy of USGS via <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener noreferrer">Mapzen/AWS</a> · <a href="/data/ateneo-elevation.json" download>Elevation data</a> · <a href="https://commons.wikimedia.org/wiki/Category:Buildings_of_Ateneo_de_Manila_University" target="_blank" rel="noopener noreferrer">Building photo references</a></p>
       <footer><span id="connection-status"><i class="dot"></i> Starting session…</span><span id="performance">60 Hz simulation</span></footer>
       <div id="toast" class="toast" role="status"></div>
       <dialog id="pair-dialog"><div class="dialog-header"><div><h2>Pair phone</h2></div><button id="close-pair" class="icon-button" aria-label="Close pairing">×</button></div><p>One phone controls this station. Keep this laptop page open.</p><label class="connection-choice">Connection <select id="connection-path" aria-label="Connection path" disabled></select></label><div id="usb-setup" class="usb-setup" hidden><button id="connect-usb" class="button primary">Connect USB phone</button><p id="usb-status" role="status">Connect a data cable and allow USB debugging on your phone.</p></div><div class="qr-wrap"><canvas id="qr" aria-label="Phone pairing QR code" hidden></canvas></div><label class="url-label">Open on phone<input id="pair-url" readonly aria-label="Controller pairing URL"></label><button id="copy-pair-url" class="button quiet" disabled>Copy phone link</button><p id="pair-instructions" class="pair-instructions"></p><div class="pair-actions"><button id="revoke" class="button danger">Revoke phone & renew link</button><span id="pair-state">Waiting for a phone</span></div></dialog>
+      ${assistanceDialogs()}
     </main>`;
   const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
   const dialog = el<HTMLDialogElement>('pair-dialog');
@@ -78,12 +86,39 @@ export async function mount(app: HTMLElement): Promise<void> {
   try { treesVisible = localStorage.getItem('trainer-trees-visible') !== 'false'; } catch { /* Storage may be unavailable. */ }
   world.setTreesVisible(treesVisible);
   let obstacles = flightObstacles(activeMap, treesVisible);
-  const profile = { ...GENERIC_PROFILE };
+  let droneSettings = defaultDroneSettings();
+  try { droneSettings = parseDroneSettings(localStorage.getItem(PROFILE_STORAGE_KEY)); } catch { /* Use trainer defaults if storage is unavailable. */ }
+  const profile = { ...droneSettings.profile };
+  const updateSpeedMenu = () => {
+    const select = el<HTMLSelectElement>('flight-speed'); select.replaceChildren();
+    for (const speed of [...new Set([5, 10, droneSettings.profile.speed])].filter(speed => speed <= droneSettings.profile.speed).sort((a, b) => a - b)) {
+      select.add(new Option(`${speed} m/s`, String(speed)));
+    }
+    select.value = String(droneSettings.profile.speed);
+  };
+  const updateCameraSpecs = () => {
+    world.setCameraFov(profile.fov);
+    const label = `16:9 · ${profile.fov}° vertical field of view · 1280 × 720 PNG captures`;
+    const specs = document.querySelector<HTMLElement>('.camera-spec')!; specs.title = label; specs.setAttribute('aria-label', label);
+  };
+  updateSpeedMenu(); updateCameraSpecs();
   let state = initialState(), paused = true, reason = 'Take off to begin.';
   let course = PRACTICE_COURSES.find(route => route.id === spot.courseId), nextGate = 0;
+  let rally: RallySession | undefined;
   const updateCourse = () => {
-    const panel = el('course-progress'); panel.hidden = !course;
+    const panel = el('course-progress'); panel.hidden = !course && !rally;
+    panel.setAttribute('aria-live', rally ? 'off' : 'polite');
     panel.dataset.complete = String(Boolean(course && nextGate === course.gates.length));
+    if (rally) {
+      const pose = rallyPose(rally.distance);
+      el('course-name').textContent = 'Rally tracking';
+      el('course-count').textContent = `Lap ${pose.lap} · ${pose.speed.toFixed(0)} m/s`;
+      const percent = rally.flyingTime ? Math.round(rally.framedTime / rally.flyingTime * 100) : 0;
+      el('course-next').textContent = rally.flyingTime
+        ? `In frame ${percent}% · Streak ${rally.streak.toFixed(1)} s · Best ${rally.bestStreak.toFixed(1)} s`
+        : 'Take off to start · Keep the car in frame';
+      return;
+    }
     if (!course) return;
     el('course-name').textContent = course.name;
     el('course-count').textContent = `${nextGate} / ${course.gates.length}`;
@@ -113,7 +148,7 @@ export async function mount(app: HTMLElement): Promise<void> {
   const startBlock = (): string | undefined => {
     if (loadingMap) return 'Wait for the location to finish loading.';
     if (document.hidden) return 'Return to the laptop page before starting.';
-    if (dialog.open) return 'Close pairing on the laptop before starting.';
+    if (app.querySelector('dialog[open]')) return 'Close the open dialog on the laptop before starting.';
     if (state.mode === 'collided') return 'Reset the flight after a collision.';
     if (source === 'phone' && (!connectedPhone || !remote.fresh(performance.now()))) return 'Pair a phone and enable its controls before starting.';
   };
@@ -125,11 +160,12 @@ export async function mount(app: HTMLElement): Promise<void> {
   };
   const photos: string[] = [];
   const perform = async (action: Action): Promise<{ ok: boolean; message: string }> => {
+    if (action === 'resume') return start();
     if (action === 'takeoff' && state.mode === 'grounded' && paused) {
       const result = start();
       if (!result.ok) return result;
     }
-    if (paused || state.mode === 'collided') return { ok: false, message: 'Start practice on the laptop first.' };
+    if (paused || state.mode === 'collided') return { ok: false, message: 'Resume the game before using flight or camera actions.' };
     if (action === 'takeoff') return { ok: takeoff(state), message: state.mode === 'taking-off' ? 'Taking off to 3 m.' : 'Takeoff is available on the ground.' };
     if (action === 'land') return { ok: land(state), message: state.mode === 'landing' ? 'Landing at the current position.' : 'Finish takeoff before landing.' };
     try {
@@ -158,6 +194,8 @@ export async function mount(app: HTMLElement): Promise<void> {
   const resetFlight = (message: string) => {
     const collided = state.mode === 'collided';
     pause(message); state = initialState(spot.pad, spot.heading, activeMap.ground); world.resetTrail();
+    rally = activeMap.id === 'rally' ? initialRallySession() : undefined;
+    world.updateRally(0);
     nextGate = 0; updateCourse();
     el('collision-prompt').hidden = true;
     if (collided) el('stage').focus({ preventScroll: true });
@@ -165,10 +203,14 @@ export async function mount(app: HTMLElement): Promise<void> {
   const reset = () => resetFlight(source === 'phone' ? 'Flight reset. Enable phone controls to take off.' : 'Flight reset. Take off when ready.');
   el('reset').onclick = el('collision-reset').onclick = reset;
   el<HTMLSelectElement>('source').onchange = (event) => { pause('Control source changed. Start practice to resume.'); source = (event.target as HTMLSelectElement).value as typeof source; };
-  el<HTMLSelectElement>('observer-mode').onchange = (event) => {
-    const value = (event.target as HTMLSelectElement).value; world.follow = value === 'follow'; world.overview = value === 'overview';
-    el('stage').classList.toggle('map-overview', world.overview);
+  const setObserverMode = (value: 'fixed' | 'follow' | 'overview') => {
+    world.setObserverMode(value); el<HTMLSelectElement>('observer-mode').value = value;
+    el('stage').classList.toggle('map-overview', value === 'overview');
+    el('observer-reset').hidden = el('fixed-view-hint').hidden = value !== 'fixed';
   };
+  setObserverMode('fixed');
+  el<HTMLSelectElement>('observer-mode').onchange = (event) => setObserverMode((event.target as HTMLSelectElement).value as 'fixed' | 'follow' | 'overview');
+  el('observer-reset').onclick = () => world.resetFixedView();
   for (const [id, change] of [
     ['aids', (active: boolean) => world.aids = active],
     ['grid', (active: boolean) => el('thirds').hidden = !active],
@@ -187,30 +229,30 @@ export async function mount(app: HTMLElement): Promise<void> {
   el<HTMLInputElement>('gimbal').oninput = (event) => { if (source === 'keyboard') state.gimbal = Number((event.target as HTMLInputElement).value); };
   const applyMap = () => {
     course = PRACTICE_COURSES.find(route => route.id === spot.courseId);
+    el('stage').dataset.tracking = String(activeMap.id === 'rally');
     world.setMap(activeMap, spot); resetFlight('Location changed. Take off when ready.');
     obstacles = flightObstacles(activeMap, treesVisible);
     el('trees').hidden = activeMap.id !== 'ateneo';
     el('map-credit').hidden = activeMap.id !== 'ateneo';
-    el('map-boundary').textContent = activeMap.id === 'ateneo' ? 'Loyola Heights campus · 80 m ceiling' : '240 × 240 m · 60 m ceiling';
+    el('map-boundary').textContent = activeMap.id === 'ateneo' ? 'Loyola Heights campus · 80 m ceiling'
+      : activeMap.id === 'rally' ? '340 × 280 m · 60 m ceiling' : '240 × 240 m · 60 m ceiling';
     setMapTip(spot.tip);
-    world.follow = activeMap.id === 'ateneo' || Boolean(course); world.overview = false;
-    el('stage').classList.remove('map-overview');
-    el<HTMLSelectElement>('observer-mode').value = world.follow ? 'follow' : 'fixed';
+    setObserverMode(activeMap.id === 'ateneo' || Boolean(course) ? 'follow' : 'fixed');
     populateSpots();
   };
   const populateSpots = () => {
     const select = el<HTMLSelectElement>('photo-spot'); select.replaceChildren();
     activeMap.spots.forEach(site => { const option = document.createElement('option'); option.value = site.id; option.textContent = site.name; select.append(option); });
     select.value = spot.id;
-    select.setAttribute('aria-label', activeMap.id === 'park' ? 'Choose a practice route' : 'Choose a photo spot');
-    el('spot-control').title = activeMap.id === 'park' ? 'Practice route' : 'Launch location';
+    select.setAttribute('aria-label', activeMap.id === 'ateneo' ? 'Choose a photo spot' : 'Choose a practice route');
+    el('spot-control').title = activeMap.id === 'ateneo' ? 'Launch location' : 'Practice route';
   };
   populateSpots(); setMapTip(spot.tip); updateCourse();
   el<HTMLSelectElement>('map').onchange = async (event) => {
     const select = event.target as HTMLSelectElement; const previous = activeMap;
     loadingMap = true; select.disabled = true; el<HTMLSelectElement>('photo-spot').disabled = true;
     pause('Loading practice location…'); setMapTip('Loading campus geometry…');
-    try { activeMap = select.value === 'ateneo' ? await loadCampus() : PRACTICE_MAP; spot = activeMap.spots[0]; applyMap(); }
+    try { activeMap = select.value === 'ateneo' ? await loadCampus() : select.value === 'rally' ? RALLY_MAP : PRACTICE_MAP; spot = activeMap.spots[0]; applyMap(); }
     catch (error) { activeMap = previous; select.value = previous.id; setMapTip(spot.tip); pause('Map could not be loaded. Start practice to resume.'); toast(error instanceof Error ? error.message : 'Map could not be loaded.'); }
     finally { loadingMap = false; select.disabled = false; el<HTMLSelectElement>('photo-spot').disabled = false; }
   };
@@ -223,6 +265,15 @@ export async function mount(app: HTMLElement): Promise<void> {
   window.addEventListener('trainer-context-lost', () => pause('Graphics context lost. Reload the simulator.'));
   const showPair = () => { pause('Pair your phone and enable controls to take off.'); dialog.showModal(); void updatePair(); };
   el('pair').onclick = showPair; el('close-pair').onclick = () => dialog.close();
+  bindAssistance(document.querySelector<HTMLElement>('.simulator')!, {
+    settings: () => droneSettings, pause, pair: showPair,
+    apply: (settings: DroneSettings) => {
+      droneSettings = settings; Object.assign(profile, settings.profile); updateSpeedMenu(); updateCameraSpecs();
+      try { localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(settings)); } catch { /* Keep this session usable. */ }
+      const name = DRONE_PRESETS.find(preset => preset.id === settings.presetId)?.name ?? 'Custom drone';
+      toast(`${name} settings applied. Start practice to resume.`);
+    },
+  });
   const path = el<HTMLSelectElement>('connection-path');
   const updatePair = async () => {
     if (!session) return;
@@ -320,9 +371,12 @@ export async function mount(app: HTMLElement): Promise<void> {
     if (!paused && source === 'phone' && !remote.fresh(now)) pause('Controller input expired. Enable controls again.');
     // Keep world meters per second consistent through slower frames; long stalls pause above.
     accumulator = paused ? 0 : Math.min(accumulator + elapsed / 1000, 0.25);
+    let trackingSeconds = 0;
     while (accumulator >= 1 / 60) {
       const before = { x: state.x, y: state.y, z: state.z }, wasFlying = state.mode === 'flying';
-      stepFlight(state, source === 'phone' ? remote.controls : keyboard.read(), 1 / 60, profile, obstacles, activeMap.bounds, activeMap.ground); accumulator -= 1 / 60;
+      if (rally && wasFlying) advanceRally(rally, 1 / 60);
+      const flightObstaclesNow = rally ? [...obstacles, rallyCarObstacle(rallyPose(rally.distance))] : obstacles;
+      stepFlight(state, source === 'phone' ? remote.controls : keyboard.read(), 1 / 60, profile, flightObstaclesNow, activeMap.bounds, activeMap.ground); accumulator -= 1 / 60;
       if (state.mode === 'collided') {
         pause(`Collision with ${state.collision}. Reset the flight to try again.`);
         el('collision-details').textContent = `Hit ${state.collision}. Reset to the launch point.`;
@@ -334,8 +388,11 @@ export async function mount(app: HTMLElement): Promise<void> {
         const advanced = advanceCourse(course, nextGate, before, state);
         if (advanced !== nextGate) { nextGate = advanced; updateCourse(); }
       }
+      if (rally && wasFlying && state.mode === 'flying') trackingSeconds += 1 / 60;
     }
+    if (rally) world.updateRally(rally.distance);
     world.update(state, paused ? 0 : now); world.render();
+    if (rally && trackingSeconds) recordTracking(rally, trackingSeconds, world.subjectInFrame());
     if (remote.sequence !== renderedSequence && remote.receivedAt > 0) { receiptToFrameMs = Math.max(0, performance.now() - remote.receivedAt); renderedSequence = remote.sequence; }
     frames++; if (now - fpsAt >= 1000) { fps = Math.round(frames * 1000 / (now - fpsAt)); frames = 0; fpsAt = now; }
     if (now - lastStatus > 100) {
@@ -363,6 +420,7 @@ export async function mount(app: HTMLElement): Promise<void> {
       el<HTMLButtonElement>('land').disabled = paused || state.mode !== 'flying';
       el<HTMLButtonElement>('capture').disabled = paused || state.mode === 'collided';
       const framed = world.subjectInFrame();
+      if (rally) updateCourse();
       el('framing').title = framed ? 'Subject in frame' : 'Subject not framed'; el('framing').setAttribute('aria-label', el('framing').title);
       el('framing').classList.toggle('framed', framed);
       el('performance').textContent = `${fps} FPS · 60 Hz simulation${source === 'phone' ? ` · receipt → frame ${Math.round(receiptToFrameMs)} ms` : ''}`;

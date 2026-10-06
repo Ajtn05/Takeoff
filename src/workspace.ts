@@ -22,6 +22,7 @@ export function bindWorkspace(root: HTMLElement): { setFullscreen: (active: bool
   const console = el('flight-console'), actions = root.querySelector<HTMLElement>('.flight-actions')!;
   const status = el('flight-status'), statusHome = status.parentElement!;
   const transport = el('transport-controls'), utility = el('utility-controls');
+  const assistance = el('assistance-controls'), assistanceHome = assistance.parentElement!;
   const reset = el('reset'), pause = el('pause'), fullscreenButton = el('simulator-fullscreen');
   const consoleHome = document.createComment('Flight console'); console.before(consoleHome);
   let fullscreen = false, fullscreenCollapsed = true;
@@ -124,9 +125,11 @@ export function bindWorkspace(root: HTMLElement): { setFullscreen: (active: bool
       fullscreenCollapsed = true;
       stage.append(console); console.prepend(status);
       actions.prepend(reset, pause); actions.append(fullscreenButton);
+      console.append(assistance);
     } else {
       consoleHome.after(console); statusHome.insertBefore(status, el('workspace-reset'));
       transport.append(reset, pause); utility.prepend(fullscreenButton);
+      assistanceHome.append(assistance);
     }
     apply();
   } };

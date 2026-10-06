@@ -18,6 +18,8 @@ const paths = {
   quality: '<rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4M10 10h4v4h-4z"/>',
   tree: '<path d="M12 21v-9M8 21h8M12 15l-4-4m4 2 4-4M5 12a4 4 0 0 1-1-7 4 4 0 0 1 7-2 4 4 0 0 1 6 1 4 4 0 1 1 2 8Z"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/>',
+  guide: '<path d="M12 5v16M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-2-10 1Z"/>',
+  tune: '<path d="M4 3v5m0 4v9M12 3v10m0 4v4M20 3v2m0 4v12M1 8h6m2 9h6m2-12h6"/>',
   map: '<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Z M9 3v16m6-14v16"/>',
   speed: '<path d="M4 18a9 9 0 1 1 16 0M12 13l5-5M7 17h10"/>',
   pin: '<path d="M19 9c0 5-7 12-7 12S5 14 5 9a7 7 0 0 1 14 0Z"/><circle cx="12" cy="9" r="2"/>',

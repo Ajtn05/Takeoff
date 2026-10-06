@@ -2,11 +2,11 @@ import { neutralControls, type Controls, type Telemetry } from '../shared/protoc
 import { FLAT_GROUND, type GroundSampler } from './terrain';
 
 export interface FlightProfile {
-  speed: number; climbRate: number; yawRate: number; acceleration: number; braking: number;
+  speed: number; climbRate: number; descentRate: number; yawRate: number; acceleration: number; braking: number;
   gimbalRate: number; gimbalMin: number; gimbalMax: number; fov: number;
 }
 export const GENERIC_PROFILE: FlightProfile = {
-  speed: 20, climbRate: 5, yawRate: Math.PI / 2, acceleration: 5, braking: 8,
+  speed: 20, climbRate: 5, descentRate: 5, yawRate: Math.PI / 2, acceleration: 5, braking: 8,
   gimbalRate: 35, gimbalMin: -90, gimbalMax: 20, fov: 64,
 };
 export type MapPoint = [number, number];
@@ -92,7 +92,7 @@ export function stepFlight(s: DroneState, controls: Controls, dt: number, profil
   const rate = Math.hypot(tx, tz) < Math.hypot(s.vx, s.vz) ? profile.braking : profile.acceleration;
   const scale = distance === 0 ? 0 : Math.min(1, rate * dt / distance);
   s.vx += dx * scale; s.vz += dz * scale;
-  let targetClimb = input.climb * profile.climbRate;
+  let targetClimb = input.climb * (input.climb >= 0 ? profile.climbRate : profile.descentRate);
   const rest = ground(s.x, s.z) + GROUND_HEIGHT;
   if (s.mode === 'taking-off') targetClimb = clamp(((s.takeoffY ?? rest + 3) - s.y) * 2, 0, 1.5);
   if (s.mode === 'landing') targetClimb = -Math.min(1, (s.y - rest) * 2 + 0.15);

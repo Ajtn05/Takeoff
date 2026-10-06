@@ -666,7 +666,7 @@ dialog p {
 }
 .controller {
   height:100dvh;
-  min-height:340px;
+  min-height:320px;
   display:flex;
   flex-direction:column;
   padding:0 max(20px,env(safe-area-inset-left)) 0 max(20px,env(safe-area-inset-right));
@@ -684,11 +684,21 @@ dialog p {
 .controller-title {
   font-size:14px;
   font-weight:550;
+  flex-shrink:0;
 }
-.controller-title span {
-  margin-left:8px;
-  font-size:11px;
+.stick-mode-choice {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font:9px var(--mono);
   color:var(--muted);
+}
+.stick-mode-choice select {
+  font:11px var(--ui);
+  padding:7px 9px;
+}
+.controller-top .connection-pill {
+  margin-left:auto;
 }
 .connection-pill {
   font:10px var(--mono);
@@ -725,11 +735,23 @@ dialog p {
   align-items:center;
   justify-content:center;
   gap:18px;
+  min-width:0;
+}
+.stick-heading {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
 }
 .stick-title {
   font:9px var(--mono);
   color:#a2b7ba;
   letter-spacing:1.5px;
+}
+.stick-axes {
+  font-size:14px;
+  font-weight:500;
+  color:#d3e3e4;
 }
 .stick {
   position:relative;
@@ -788,7 +810,7 @@ dialog p {
 .axis {
   position:absolute;
   font:8px var(--mono);
-  color:#65838c;
+  color:#a0b8bf;
   pointer-events:none;
 }
 .axis.up {
@@ -814,6 +836,7 @@ dialog p {
 .stick-value {
   font:9px var(--mono);
   color:#7b9da5;
+  white-space:nowrap;
 }
 .controller-center {
   display:flex;
@@ -821,6 +844,38 @@ dialog p {
   align-items:center;
   gap:11px;
   text-align:center;
+}
+.phone-pause-prompt {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  width:100%;
+  padding:12px;
+  border:1px solid #637969;
+  border-radius:8px;
+  background:#253b38;
+}
+.phone-pause-prompt strong {
+  color:var(--accent);
+  font-size:16px;
+  font-weight:550;
+}
+.phone-pause-prompt span {
+  color:#d3e3e4;
+  font-size:11px;
+  line-height:1.5;
+}
+.game-paused .controller-center>.section-label,
+.game-paused .gimbal-buttons,
+.game-paused .capture-circle,
+.game-paused .capture-state,
+.game-paused .phone-flight-buttons {
+  display:none;
+}
+.game-paused #enable:not(:disabled) {
+  background:transparent;
+  color:var(--accent);
+  border-color:#637969;
 }
 .gimbal-buttons {
   display:flex;
@@ -1061,6 +1116,9 @@ dialog p {
   .controller-top {
     height:44px;
   }
+  .stick-mode-choice select {
+    padding:4px 7px;
+  }
   .controller-status {
     padding:8px;
     gap:23px;
@@ -1071,6 +1129,13 @@ dialog p {
   }
   .stick-column {
     gap:10px;
+  }
+  .stick-title {
+    font-size:8px;
+    letter-spacing:1px;
+  }
+  .stick-axes {
+    font-size:12px;
   }
   .controller-center {
     gap:6px;
@@ -1112,7 +1177,70 @@ dialog p {
     top:calc(50% - 24px);
   }
 }
+@media(max-width:720px) and (orientation:landscape) {
+  .controller-top {
+    gap:8px;
+  }
+  .controller-title {
+    font-size:12px;
+  }
+  .stick-mode-choice {
+    font-size:0;
+  }
+  .stick-mode-choice select {
+    font-size:10px;
+  }
+  .controller-top .connection-pill {
+    padding:6px 8px;
+    font-size:8px;
+  }
+  .controller-top .button {
+    padding:5px 8px;
+    font-size:10px;
+  }
+  .stick-layout {
+    grid-template-columns:1fr 180px 1fr;
+  }
+  .controller-center>.primary,
+  #phone-message {
+    max-width:180px;
+  }
+}
+@media(max-height:360px) and (orientation:landscape) {
+  .controller,
+  .controller[data-stick-size=small],
+  .controller[data-stick-size=large] {
+    --stick:136px;
+  }
+  .controller[data-stick-size=small] {
+    --stick:128px;
+  }
+  .controller[data-stick-size=large] {
+    --stick:144px;
+  }
+  .stick-column {
+    gap:8px;
+  }
+  .controller-status {
+    padding:6px;
+  }
+  .controller-center {
+    gap:4px;
+  }
+}
 @media(orientation:portrait) {
+  .phone-page .controller-top {
+    flex-wrap:wrap;
+    align-content:center;
+    height:90px;
+    gap:8px 12px;
+  }
+  .phone-page .controller-title {
+    flex:1;
+  }
+  .phone-page .controller-top .connection-pill {
+    margin-left:0;
+  }
   .phone-page .rotate-hint {
     display:flex;
     position:fixed;

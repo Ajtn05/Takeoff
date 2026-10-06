@@ -1,6 +1,6 @@
 # Takeoff UI design
 
-Takeoff is a flight and photography simulator. Its identity should come from the observer view, camera composition, flight instruments, and controller workflow. The desktop header stays limited to its logo and title. Preserve adjustable layouts, the fixed bottom instrument panel, its optional glass surface, and compact icon controls. Flight data has no drag handle or position settings; Classic docks it beneath the camera, and fullscreen keeps flight actions above the bottom strip.
+Takeoff is a flight and photography simulator. Its identity should come from the observer view, camera composition, flight instruments, and controller workflow. The desktop header carries the logo, title, and compact control modules. **Guide** is the explicitly labeled toolbar button; drone parameters use a sliders icon. Both remain accessible in fullscreen. Preserve adjustable layouts, the fixed bottom instrument panel, its optional glass surface, and compact icon controls. Flight data has no drag handle or position settings; Classic docks it beneath the camera, and fullscreen keeps flight actions above the bottom strip.
 
 The controls should feel like cockpit or amplifier components: distinct control banks, raised keys, restrained faceplate gradients, and recessed numeric displays. Use these details to show grouping, depth, and interaction. Add no visible group labels merely to explain the styling. Fullscreen is a flight workspace: hide desktop setup and branding, fill the window with the observer and camera views, and retain compact instruments and flight actions. A collapsed instrument panel continues to show altitude, speed, and heading. Collision recovery has a persistent reset prompt in both modes.
 
@@ -25,6 +25,8 @@ Our review of Takeoff identified small text, blue tint across nearly every surfa
 ## Interaction and readability
 
 Nielsen Norman Group recommends visible labels for ambiguous icons and warns that hover-only help increases effort and does not translate to touch. Takeoff deliberately keeps the user's requested icon toolbar; this is a compactness tradeoff, not an accessibility improvement. Tooltips explain names and shortcuts. Essential state remains visible, and the narrow-screen layout selector uses text. Phone flight actions retain text labels. [Icon usability](https://www.nngroup.com/articles/icon-usability/), [Tooltip guidelines](https://www.nngroup.com/articles/tooltip-guidelines/)
+
+The labeled Guide opens a modal with Startup, Controls, Connection, and Layout tabs and icon legends. It pauses flight and leaves resuming to the learner. Drone parameters use an apply/cancel draft, explicit units, bounded numeric inputs, synchronized sliders, and saved applied settings. Preset descriptions distinguish published flight speed limits from estimated handling. The fixed observer supports mouse, touch, and keyboard adjustment; ordinary arrow keys remain flight controls, while Alt modifies them for viewpoint changes.
 
 Use these criteria when changing the UI:
 

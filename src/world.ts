@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GENERIC_PROFILE, type DroneState } from './simulation';
 import { PRACTICE_MAP, translationMarker, type TrainingMap, type PhotoSpot } from './maps';
 import { buildCampusBuilding, buildCampusTrees, terrainGeometry, terrainSurface } from './campus';
@@ -8,6 +9,7 @@ import { createDrone } from './drone';
 import { campusRoadWidth } from './vegetation';
 import { campusMaterial } from './campus-materials';
 import { PRACTICE_COURSES } from './practice';
+import { RALLY_CAR, RALLY_LENGTH, RALLY_PATH, RALLY_ROAD_WIDTH, rallyPose } from './rally';
 
 export class TrainingWorld {
   readonly scene = new THREE.Scene();
@@ -22,6 +24,9 @@ export class TrainingWorld {
   private trail = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x428980, transparent: true, opacity: 0.65 }));
   private trailPoints: THREE.Vector3[] = [];
   private propellers: THREE.Mesh[] = [];
+  private rallyWheels: THREE.Group[] = [];
+  private rallyDust?: THREE.InstancedMesh;
+  private rallyDistance = 0;
   private ray = new THREE.Raycaster();
   private target = new THREE.Vector3(0, 3.5, -13);
   private subject = new THREE.Group();
@@ -45,9 +50,12 @@ export class TrainingWorld {
   private sun = new THREE.DirectionalLight('#fff1d1', 3.2);
   private hemisphere = new THREE.HemisphereLight('#dceaff', '#647147', 1.4);
   private droneMarker = new THREE.Sprite(new THREE.SpriteMaterial({ color: '#b7f7d4', depthTest: false }));
+  private observerControls: OrbitControls;
+  private fixedPosition = new THREE.Vector3();
+  private fixedTarget = new THREE.Vector3();
   aids = true;
-  follow = false;
-  overview = false;
+  private observerMode: 'fixed' | 'follow' | 'overview' = 'fixed';
+  get overview(): boolean { return this.observerMode === 'overview'; }
 
   constructor(private stage: HTMLElement, private observerView: HTMLElement, private cameraView: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, logarithmicDepthBuffer: true });
@@ -62,6 +70,31 @@ export class TrainingWorld {
     this.renderer.domElement.className = 'world-canvas';
     this.renderer.domElement.setAttribute('aria-label', 'Practice park rendered from the observer and drone cameras');
     stage.prepend(this.renderer.domElement);
+    this.observerControls = new OrbitControls(this.observer, observerView);
+    this.observerControls.minDistance = 2; this.observerControls.maxDistance = 2500;
+    this.observerControls.maxPolarAngle = Math.PI / 2 - 0.03;
+    const observerKeys = document.createElement('div');
+    this.observerControls.listenToKeyEvents(observerKeys);
+    this.observerControls.addEventListener('change', () => {
+      if (this.observerMode === 'fixed') {
+        this.fixedPosition.copy(this.observer.position); this.fixedTarget.copy(this.observerControls.target);
+      }
+    });
+    // Header controls do not start camera drags.
+    observerView.querySelector('.view-heading')!.addEventListener('pointerdown', event => event.stopPropagation());
+    observerView.addEventListener('keydown', event => {
+      if (event.target !== observerView || this.observerMode !== 'fixed' || !event.altKey) return;
+      if (event.code.startsWith('Arrow')) {
+        observerKeys.dispatchEvent(new KeyboardEvent('keydown', { code: event.code, shiftKey: event.shiftKey }));
+        event.preventDefault(); return;
+      }
+      if (!['Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract'].includes(event.code)) return;
+      event.preventDefault();
+      const offset = this.observer.position.clone().sub(this.observerControls.target);
+      offset.setLength(THREE.MathUtils.clamp(offset.length() * (['Equal', 'NumpadAdd'].includes(event.code) ? 0.85 : 1.15), 2, 2500));
+      this.observer.position.copy(this.observerControls.target).add(offset); this.observerControls.update();
+    });
+    observerView.addEventListener('contextmenu', event => { if (this.observerMode === 'fixed') event.preventDefault(); });
     this.scene.background = new THREE.Color('#bdd8ec');
     this.scene.fog = new THREE.Fog('#c8dfdf', 65, 140);
     this.scene.add(this.hemisphere); this.sun.intensity = 2.2;
@@ -129,19 +162,147 @@ export class TrainingWorld {
       }
     });
     this.environment.clear(); this.courseMarkers.clear(); this.forest = undefined; this.subject = new THREE.Group(); this.map = map; this.spot = spot;
+    this.rallyWheels = []; this.rallyDust = undefined; this.rallyDistance = map.id === 'rally' ? NaN : 0;
     this.framingPose = []; this.shadowPose = []; this.aidPosition.set(NaN, NaN, NaN);
     this.renderer.shadowMap.needsUpdate = true;
     this.target.set(...spot.target); this.resetTrail();
     const campus = map.id === 'ateneo';
     this.renderer.domElement.setAttribute('aria-label', `${map.name} rendered from the observer and drone cameras`);
     this.scene.fog = new THREE.Fog('#bdd8ec', campus ? 900 : 200, campus ? 2800 : 700);
-    if (campus) this.buildCampus(); else this.buildPark();
+    if (campus) this.buildCampus(); else if (map.id === 'rally') this.buildRally(); else this.buildPark();
     this.buildPracticeAids();
     const base = map.ground(spot.pad.x, spot.pad.z);
     this.sun.position.set(spot.pad.x - 60, base + 100, spot.pad.z + 45);
     this.sun.target.position.set(spot.pad.x, base, spot.pad.z);
     Object.assign(this.sun.shadow.camera, { left: -100, right: 100, top: 100, bottom: -100, near: 1, far: 250 });
     this.sun.shadow.camera.updateProjectionMatrix();
+    this.resetFixedView();
+  }
+  setObserverMode(mode: 'fixed' | 'follow' | 'overview'): void {
+    this.observerMode = mode;
+    this.observerControls.enabled = mode === 'fixed';
+    this.observerView.style.touchAction = mode === 'fixed' ? 'none' : 'auto';
+    this.observerView.dataset.mode = mode;
+    this.observerView.tabIndex = mode === 'fixed' ? 0 : -1;
+    if (mode === 'fixed') {
+      this.observer.position.copy(this.fixedPosition); this.observerControls.target.copy(this.fixedTarget);
+      this.observerControls.update();
+    }
+  }
+  resetFixedView(): void {
+    const { pad, target, courseId } = this.spot;
+    if (this.map.id === 'ateneo') {
+      this.fixedPosition.set(pad.x + 80, this.map.ground(pad.x, pad.z) + 90, pad.z + 100);
+      this.fixedTarget.set(...target);
+    } else if (this.map.id === 'rally') {
+      this.fixedPosition.set(0, 290, 220); this.fixedTarget.set(0, 0, 0);
+    } else if (courseId) {
+      this.fixedPosition.set(pad.x + 18, 20, pad.z + 22); this.fixedTarget.set(...target);
+    } else { this.fixedPosition.set(27, 24, 34); this.fixedTarget.set(0, 1, -5); }
+    // Update the controls' internal spherical state even when another view is active.
+    this.observer.position.copy(this.fixedPosition); this.observerControls.target.copy(this.fixedTarget);
+    this.observerControls.update();
+  }
+  setCameraFov(fov: number): void {
+    this.camera.fov = this.aidCamera.fov = fov;
+    this.camera.updateProjectionMatrix(); this.aidCamera.updateProjectionMatrix();
+    this.aidPosition.set(NaN, NaN, NaN); this.framingPose = [];
+  }
+  private rallyRibbon(width: number, offset = 0): THREE.BufferGeometry {
+    const positions: number[] = [], indices: number[] = [];
+    RALLY_PATH.forEach((point, i) => {
+      const pose = rallyPose(i / (RALLY_PATH.length - 1) * RALLY_LENGTH);
+      for (const side of [-1, 1]) {
+        const right = offset + side * width / 2;
+        positions.push(point.x + Math.cos(pose.heading) * right, 0, point.z + Math.sin(pose.heading) * right);
+      }
+      if (i) { const a = (i - 1) * 2; indices.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3)); geometry.setIndex(indices);
+    geometry.computeVertexNormals(); return geometry;
+  }
+  private buildRally(): void {
+    const ground = this.mesh(new THREE.PlaneGeometry(340, 280), '#87966d', [0, -0.04, 0]);
+    ground.rotation.x = -Math.PI / 2; ground.castShadow = false;
+    for (const [width, offset, height, color] of [[13, 0, 0.01, '#c7b693'], [RALLY_ROAD_WIDTH, 0, 0.025, '#a99274'],
+      [0.3, -0.9, 0.03, '#938369'], [0.3, 0.9, 0.03, '#938369']] as const) {
+      const road = this.mesh(this.rallyRibbon(width, offset), color, [0, height, 0]); road.castShadow = false;
+    }
+    // Alternating start-line squares cross the home straight.
+    const start = rallyPose(0);
+    for (let row = 0; row < 2; row++) for (let col = 0; col < 12; col++) {
+      const right = (col - 5.5) * 0.7, forward = (row - 0.5) * 0.7;
+      const square = this.box([0.7, 0.012, 0.7], (row + col) % 2 ? '#e9e2cc' : '#37403c',
+        [start.x + Math.cos(start.heading) * right + Math.sin(start.heading) * forward, 0.042,
+          start.z + Math.sin(start.heading) * right - Math.cos(start.heading) * forward]);
+      square.rotation.y = -start.heading; square.castShadow = false;
+    }
+    // Low course markers leave the air above the circuit open for tracking practice.
+    for (let distance = 16; distance < RALLY_LENGTH; distance += 24) {
+      const pose = rallyPose(distance);
+      for (const side of [-1, 1]) {
+        const x = pose.x + Math.cos(pose.heading) * 6.1 * side, z = pose.z + Math.sin(pose.heading) * 6.1 * side;
+        this.mesh(new THREE.ConeGeometry(0.24, 0.65, 8), '#e98f42', [x, 0.35, z]);
+        this.box([0.52, 0.06, 0.52], '#39443c', [x, 0.05, z]);
+      }
+    }
+    this.label('RALLY CIRCUIT', [0, 1.5, 118], 20, false);
+    this.label('HAIRPIN', [138, 1.6, 8], 8);
+    this.label('S BENDS', [-58, 1.6, -58], 8);
+    this.label('HOME STRAIGHT', [45, 1.6, 98], 12);
+    // The entire car is the photographic subject, including its wheels and glass.
+    this.environment.add(this.subject);
+    this.box([1.95, 0.55, 4.3], '#e75c32', [0, 0.67, 0], this.subject);
+    this.box([1.78, 0.13, 4.05], '#ef7744', [0, 0.98, 0], this.subject);
+    this.box([1.63, 0.56, 1.9], '#263f48', [0, 1.22, 0.22], this.subject);
+    this.box([1.7, 0.1, 1.8], '#f1eee1', [0, 1.52, 0.27], this.subject);
+    this.box([0.38, 0.015, 1.18], '#f1eee1', [0, 1.06, -1.38], this.subject);
+    this.box([1.95, 0.16, 0.2], '#28332f', [0, 0.47, -2.14], this.subject);
+    this.box([1.95, 0.16, 0.2], '#28332f', [0, 0.47, 2.14], this.subject);
+    this.box([1.9, 0.1, 0.4], '#26332f', [0, 1.15, 1.8], this.subject);
+    for (const side of [-1, 1]) {
+      this.box([0.45, 0.17, 0.03], '#fff0bf', [side * 0.66, 0.78, -2.17], this.subject);
+      this.box([0.42, 0.15, 0.03], '#982e23', [side * 0.65, 0.78, 2.17], this.subject);
+      this.box([0.02, 0.4, 0.58], '#f1eee1', [side * 0.99, 0.78, 0.1], this.subject);
+      for (const z of [-1.38, 1.38]) {
+        const wheel = new THREE.Group(); wheel.position.set(side * 1.01, RALLY_CAR.wheelRadius, z); this.subject.add(wheel);
+        const tyre = this.mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.28, 16), '#242b29', [0, 0, 0], wheel);
+        tyre.rotation.z = Math.PI / 2;
+        const hub = this.mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.29, 12), '#c0c6bb', [0, 0, 0], wheel);
+        hub.rotation.z = Math.PI / 2;
+        this.box([0.3, 0.06, 0.44], '#667169', [0, 0, 0], wheel);
+        this.rallyWheels.push(wheel);
+      }
+    }
+    this.rallyWheels.forEach(wheel => this.batchStaticMeshes(wheel));
+    this.batchStaticMeshes(this.subject);
+    const dustMaterial = new THREE.MeshStandardMaterial({ color: '#d5c4a0', transparent: true, opacity: 0.17, depthWrite: false, roughness: 1 });
+    this.rallyDust = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), dustMaterial, 16);
+    this.rallyDust.userData.ownedMaterial = true; this.rallyDust.raycast = () => {}; this.rallyDust.frustumCulled = false;
+    this.environment.add(this.rallyDust);
+    this.batchStaticMeshes(this.environment);
+    this.updateRally(0);
+  }
+  updateRally(distance: number): void {
+    if (this.map.id !== 'rally' || distance === this.rallyDistance) return;
+    const pose = rallyPose(distance);
+    this.rallyDistance = distance;
+    this.subject.position.set(pose.x, 0, pose.z); this.subject.rotation.y = -pose.heading;
+    this.rallyWheels.forEach(wheel => wheel.rotation.x = -distance / RALLY_CAR.wheelRadius);
+    this.target.set(pose.x, 0.95, pose.z);
+    this.subject.updateMatrixWorld(true);
+    this.framingPose = []; this.aidPosition.set(NaN, NaN, NaN);
+    if (this.rallyDust) {
+      // Render zero-sized dust at the start so its shader is ready before flight.
+      const particle = new THREE.Object3D();
+      for (let i = 0; i < 16; i++) {
+        const trail = rallyPose(Math.max(0, distance - 3 - i * 0.9)), spread = (i % 2 ? -1 : 1) * (0.4 + i * 0.05);
+        particle.position.set(trail.x + Math.cos(trail.heading) * spread, 0.25 + i * 0.045, trail.z + Math.sin(trail.heading) * spread);
+        particle.scale.setScalar(distance > 0 ? 0.3 + i * 0.065 : 0); particle.updateMatrix(); this.rallyDust.setMatrixAt(i, particle.matrix);
+      }
+      this.rallyDust.instanceMatrix.needsUpdate = true;
+    }
   }
   private buildPark() {
     const ground = this.mesh(new THREE.PlaneGeometry(240, 240), '#a6b795', [0, -0.04, 0]);
@@ -248,7 +409,7 @@ export class TrainingWorld {
       this.box([0.08, 0.004, 1.1], '#e4d9ba', [x + 0.35, base + 0.005, z]);
       this.box([0.7, 0.004, 0.08], '#e4d9ba', [x, base + 0.005, z]);
     }
-    if (!this.spot.courseId) {
+    if (!this.spot.courseId && this.map.id !== 'rally') {
       const markerPosition = translationMarker(this.spot, this.map.ground);
       const marker = this.mesh(new THREE.TorusGeometry(1, 0.055, 8, 40), '#e6b95c', markerPosition);
       marker.layers.set(2); this.label('02  ·  TRANSLATE', [markerPosition[0], markerPosition[1] + 2, markerPosition[2]]);
@@ -340,7 +501,7 @@ export class TrainingWorld {
     this.droneMarker.position.set(s.x, s.y + 0.8, s.z);
     const ground = this.map.ground(s.x, s.z);
     this.sun.position.set(s.x - 60, ground + 100, s.z + 45); this.sun.target.position.set(s.x, ground, s.z);
-    const shadowPose = [s.x, s.y, s.z, s.heading, s.pitch, s.bank];
+    const shadowPose = [s.x, s.y, s.z, s.heading, s.pitch, s.bank, this.rallyDistance];
     if (shadowPose.some((value, i) => value !== this.shadowPose[i]) && (time === 0 || time - this.lastShadowUpdate >= 100)) {
       this.renderer.shadowMap.needsUpdate = true; this.shadowPose = shadowPose; this.lastShadowUpdate = time;
     }
@@ -358,7 +519,7 @@ export class TrainingWorld {
       this.trailPoints.push(this.drone.position.clone()); if (this.trailPoints.length > 400) this.trailPoints.shift();
       this.trail.geometry.dispose(); this.trail.geometry = new THREE.BufferGeometry().setFromPoints(this.trailPoints);
     }
-    if (this.follow) {
+    if (this.observerMode === 'follow') {
       this.observer.position.lerp(new THREE.Vector3(s.x - Math.sin(s.heading) * 9 + 3, s.y + 6, s.z + Math.cos(s.heading) * 9), 0.06);
       this.observer.lookAt(s.x, s.y, s.z);
     } else if (this.overview) {
@@ -366,12 +527,7 @@ export class TrainingWorld {
       const distance = Math.max(b.maxZ - b.minZ, (b.maxX - b.minX) / this.observer.aspect) / (2 * Math.tan(THREE.MathUtils.degToRad(this.observer.fov / 2))) * 1.12;
       this.observer.position.set((b.minX + b.maxX) / 2, distance, (b.minZ + b.maxZ) / 2 + 0.01);
       this.observer.position.y += this.map.ground(0, 0); this.observer.lookAt((b.minX + b.maxX) / 2, this.map.ground(0, 0), (b.minZ + b.maxZ) / 2);
-    } else if (this.map.id === 'ateneo') {
-      this.observer.position.set(this.spot.pad.x + 80, this.map.ground(this.spot.pad.x, this.spot.pad.z) + 90, this.spot.pad.z + 100);
-      this.observer.lookAt(...this.spot.target);
-    } else if (this.spot.courseId) {
-      this.observer.position.set(this.spot.pad.x + 18, 20, this.spot.pad.z + 22); this.observer.lookAt(...this.spot.target);
-    } else { this.observer.position.set(27, 24, 34); this.observer.lookAt(0, 1, -5); }
+    } else this.observerControls.update();
     this.frustum.visible = this.direction.visible = this.trail.visible = this.aids;
     this.droneMarker.visible = this.aids && s.mode !== 'grounded';
     if (this.aids) this.observer.layers.enable(2); else this.observer.layers.disable(2);

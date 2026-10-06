@@ -6,7 +6,7 @@ export const PROTOCOL_VERSION = 1;
 export interface Controls { climb: number; yaw: number; forward: number; right: number; gimbal: number }
 export const neutralControls = (): Controls => ({ climb: 0, yaw: 0, forward: 0, right: 0, gimbal: 0 });
 export const isNeutral = (c: Controls): boolean => Object.values(c).every((v) => v === 0);
-export type Action = 'takeoff' | 'land' | 'capture';
+export type Action = 'takeoff' | 'land' | 'capture' | 'resume';
 export interface Telemetry {
   altitude: number; heading: number; speed: number; gimbal: number;
   mode: 'grounded' | 'taking-off' | 'flying' | 'landing' | 'collided';
@@ -55,7 +55,7 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'hello': return ['host', 'controller'].includes(v.role as string) && shortString(v.sessionId, 64) && shortString(v.token, 128) && v.version === PROTOCOL_VERSION ? v as ClientMessage : null;
     case 'resume': return sequence(v.generation) && validControls(v.controls) && isNeutral(v.controls) ? v as ClientMessage : null;
     case 'input': return sequence(v.generation) && sequence(v.seq) && validControls(v.controls) ? v as ClientMessage : null;
-    case 'action': return sequence(v.generation) && shortString(v.id, 64) && /^[a-zA-Z0-9_-]+$/.test(v.id) && ['takeoff', 'land', 'capture'].includes(v.action as string) ? v as ClientMessage : null;
+    case 'action': return sequence(v.generation) && shortString(v.id, 64) && /^[a-zA-Z0-9_-]+$/.test(v.id) && ['takeoff', 'land', 'capture', 'resume'].includes(v.action as string) ? v as ClientMessage : null;
     case 'ack': return sequence(v.generation) && shortString(v.id, 64) && typeof v.ok === 'boolean' && shortString(v.message) ? v as ClientMessage : null;
     case 'status': return validTelemetry(v.status) ? v as ClientMessage : null;
     case 'suspend': return shortString(v.reason) ? v as ClientMessage : null;

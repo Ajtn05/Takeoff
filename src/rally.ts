@@ -2,7 +2,7 @@ import { CatmullRomCurve3, Vector3 } from 'three';
 import { FLIGHT_CEILING, type FlightBounds, type Obstacle } from './simulation';
 import type { RaceCar, RaceCircuit } from './circuit';
 
-export const RALLY_BOUNDS: FlightBounds = { minX: -170, maxX: 170, minZ: -140, maxZ: 140, ceiling: FLIGHT_CEILING };
+export const RALLY_BOUNDS: FlightBounds = { minX: -370, maxX: 370, minZ: -140, maxZ: 140, ceiling: FLIGHT_CEILING };
 export const RALLY_PAD = { x: -15, z: 108 };
 export const RALLY_ROAD_WIDTH = 9;
 // Collision envelope includes protruding tyres, bumpers, and the roof.

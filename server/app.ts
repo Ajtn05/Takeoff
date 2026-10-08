@@ -84,7 +84,7 @@ export async function createTrainerServer(options: { dev?: boolean; host?: strin
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405).end(); return; }
     try {
       const decoded = decodeURIComponent(pathname);
-      const file = decoded === '/' || decoded === '/controller' ? resolve(root, 'index.html') : resolve(root, `.${decoded}`);
+      const file = ['/', '/controller', '/practice', '/game'].includes(decoded) ? resolve(root, 'index.html') : resolve(root, `.${decoded}`);
       if (!file.startsWith(root + sep)) { res.writeHead(403).end(); return; }
       const body = await readFile(file);
       const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };

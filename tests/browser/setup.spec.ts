@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('Guide covers startup, keyboard and phone controls, connections and layout in desktop and fullscreen', async ({ page }) => {
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   const guide = page.getByRole('button', { name: 'Guide', exact: true });
   await guide.click(); await expect(page.getByRole('dialog', { name: 'Guide', exact: true })).toBeVisible();
   await expect(page.getByRole('tabpanel', { name: 'Startup', exact: true })).toContainText('Your first flight');
@@ -36,7 +36,7 @@ test('Guide covers startup, keyboard and phone controls, connections and layout 
 test('drone presets, custom values, validation and cancel work and saved tuning affects flight', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   const setup = page.getByRole('button', { name: 'Drone parameters', exact: true });
   await setup.click(); await page.getByLabel('Drone preset', { exact: true }).selectOption('mini-4-pro');
   await expect(page.getByLabel('Horizontal speed', { exact: true })).toHaveValue('16');
@@ -86,7 +86,7 @@ test('drone presets, custom values, validation and cancel work and saved tuning 
 });
 
 test('fixed observer can orbit, pan and zoom, keeps its viewpoint through other cameras, and resets', async ({ page }) => {
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   const view = page.locator('#observer-view'), mode = page.locator('#observer-mode');
   const image = () => view.screenshot({ animations: 'disabled', style: '#fixed-view-hint, .view-heading { visibility: hidden; } .observer-view { outline: none !important; }' });
   await page.mouse.move(0, 0);

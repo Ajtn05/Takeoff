@@ -1,5 +1,7 @@
 The browser suite uses installed Google Chrome and the built production app. Run `npm run build` before `npm run test:browser`.
 
+The root page is the mode menu. Practice checks open `/practice`; Flight Rush checks open `/game` and cover menu navigation, takeoff, scoring, pause/resume, score banking, retry, persistent best scores, narrow layouts, and the paired-phone flow. `tests/game.test.ts` also flies 120 generated gates using actual control inputs to verify every maneuver and the course at maximum difficulty.
+
 Chrome DevTools dispatches two simultaneous touch contacts to the controller. This verifies browser Pointer Events, separate capture ownership, neutral release/cancel, and the relayed simulation flow. It is an emulation check; it does not replace an actual Android device test.
 
 The suite preserves screenshots and traces on failures. Successful runs also save desktop, mobile, Classic, fullscreen, collision, and controller screenshots under `test-results/` for visual inspection. Fullscreen checks cover native and in-page expansion, restoration of desktop controls, live compact readings, and instrument placement in narrow or short windows.

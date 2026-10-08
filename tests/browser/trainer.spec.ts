@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('park routes launch, count flown hoops, reset, and remain usable in fullscreen and on mobile', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   const routes = page.getByRole('combobox', { name: 'Choose a practice route' });
   await expect(routes).toBeVisible(); await expect(page.locator('#photo-spot option')).toHaveCount(4);
   await expect(page.locator('#course-progress')).toBeHidden();
@@ -61,7 +61,7 @@ test('park routes launch, count flown hoops, reset, and remain usable in fullscr
 test('campus trees toggle immediately and the preference survives location changes and reloads', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   const trees=page.getByRole('button',{name:'Campus trees',exact:true});
   await expect(trees).toBeHidden();
   await page.locator('#map').selectOption('ateneo'); await expect(page.locator('#photo-spot')).toBeEnabled();
@@ -88,7 +88,7 @@ test('campus trees toggle immediately and the preference survives location chang
 test('campus spots switch cleanly and preserve photos', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await expect(page.getByRole('button', { name: 'Guide', exact: true })).toBeVisible();
   await expect(page.locator('#guide-dialog')).not.toBeVisible();
   await expect(page.locator('.photo-library')).toBeVisible();
@@ -133,7 +133,7 @@ test('campus spots switch cleanly and preserve photos', async ({ page }) => {
 
 test('keyboard flight, two camera views, clean capture, pause and reset', async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/');
+  await page.goto('/practice');
   await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await expect(page.locator('.world-canvas')).toBeVisible();
   await page.keyboard.press('t');
@@ -160,7 +160,7 @@ test('keyboard flight, two camera views, clean capture, pause and reset', async 
 });
 
 test('phone pairing, simultaneous sticks, release, cancellation and disconnect pause', async ({ page, browser }) => {
-  await page.goto('/'); await page.locator('#pair').click();
+  await page.goto('/practice'); await page.locator('#pair').click();
   await expect(page.locator('#pair-url')).not.toHaveValue('');
   const url = await page.locator('#pair-url').inputValue(); await page.locator('#close-pair').click();
   const phoneContext = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
@@ -199,7 +199,7 @@ test('phone pairing, simultaneous sticks, release, cancellation and disconnect p
 
 test('phone takeoff is gated by readiness and works from desktop after landing and reset', async ({ page, browser }) => {
   test.setTimeout(45_000);
-  await page.goto('/'); await page.locator('#pair').click();
+  await page.goto('/practice'); await page.locator('#pair').click();
   await expect(page.locator('#pair-url')).not.toHaveValue('');
   const url = await page.locator('#pair-url').inputValue(); await page.locator('#close-pair').click();
   const phoneContext = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
@@ -228,7 +228,7 @@ test('phone takeoff is gated by readiness and works from desktop after landing a
 });
 
 test('hidden laptop pauses flight and camera-only mode stays usable', async ({ page }) => {
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.locator('#pause').click();
   await page.getByRole('button', { name: 'Camera only', exact: true }).click(); await expect(page.locator('#observer-view')).toBeHidden();
   await expect(page.locator('#camera-view')).toBeVisible();
@@ -245,7 +245,7 @@ test('workspace layouts resize, instruments stay docked and preferences persist'
   await page.addInitScript(() => {
     if (!localStorage.getItem('trainer-workspace-v1')) localStorage.setItem('trainer-workspace-v1', JSON.stringify({ panelX: 1, panelY: 0 }));
   });
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await expect(page.locator('.station-brand')).toHaveText('TAKEOFF');
   await expect(page.getByText('Paused', { exact: true })).toHaveCount(1);
   await expect(page.locator('#stage')).not.toContainText('Paused');
@@ -361,7 +361,7 @@ test('fullscreen fills the window with flight views and restores desktop compone
     Object.defineProperty(document, 'webkitFullscreenEnabled', { configurable: true, value: false });
   });
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.locator('#observer-mode').selectOption('follow');
   await page.locator('#aids').click();
   const root = page.locator('.simulator'), stage = page.locator('#stage'), panel = page.locator('#flight-panel');
@@ -416,7 +416,7 @@ test('fullscreen fills the window with flight views and restores desktop compone
 });
 
 test('collision reset prompt stays visible and resets the flight in desktop and fullscreen', async ({ page }) => {
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   for (const fullscreen of [false, true]) {
     if (fullscreen) await page.locator('#simulator-fullscreen').click();
     await page.locator('#takeoff').click(); await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying', { timeout: 10_000 });

@@ -22,7 +22,7 @@ export async function mount(app: HTMLElement): Promise<void> {
   app.innerHTML = `
     <main class="simulator">
       <header class="topbar">
-        <div class="station-brand"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 10 22 22M22 10 10 22M12 12h8v8h-8z"/><circle cx="7" cy="7" r="5"/><circle cx="25" cy="7" r="5"/><circle cx="7" cy="25" r="5"/><circle cx="25" cy="25" r="5"/></svg><h1 class="app-title">TAKEOFF</h1></div>
+        <a class="station-brand" href="/" aria-label="Takeoff main menu" style="color:inherit;text-decoration:none"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M10 10 22 22M22 10 10 22M12 12h8v8h-8z"/><circle cx="7" cy="7" r="5"/><circle cx="25" cy="7" r="5"/><circle cx="7" cy="25" r="5"/><circle cx="25" cy="25" r="5"/></svg><h1 class="app-title">TAKEOFF</h1></a>
         <div class="toolbar">
           <div id="transport-controls" class="control-module" role="group" aria-label="Flight playback">
           ${iconControl('reset', 'reset', 'Reset flight')}

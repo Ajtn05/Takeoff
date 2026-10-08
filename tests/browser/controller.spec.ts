@@ -3,7 +3,7 @@ import { neutralControls, type Controls } from '../../shared/protocol';
 
 test('phone stick modes send the DJI axis commands and switching clears held input', async ({ page, browser }) => {
   test.setTimeout(60_000);
-  await page.goto('/'); await page.locator('#pair').click();
+  await page.goto('/practice'); await page.locator('#pair').click();
   await expect(page.locator('#pair-url')).not.toHaveValue('');
   const url = await page.locator('#pair-url').inputValue(); await page.locator('#close-pair').click();
   const phoneContext = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
@@ -104,7 +104,7 @@ test('controller layouts fit landscape phones and pairing-free previews still ch
 
 test('paused flights prompt on the phone and resume there while respecting laptop blockers', async ({ page, browser }) => {
   test.setTimeout(60_000);
-  await page.goto('/'); await page.locator('#pair').click();
+  await page.goto('/practice'); await page.locator('#pair').click();
   await expect(page.locator('#pair-url')).not.toHaveValue('');
   const url = await page.locator('#pair-url').inputValue(); await page.locator('#close-pair').click();
   const context = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });

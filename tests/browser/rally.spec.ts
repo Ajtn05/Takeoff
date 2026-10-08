@@ -3,12 +3,12 @@ import { test, expect } from '@playwright/test';
 test('rally tracking moves the visible subject, freezes on pause, resets, and works across layouts', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.getByRole('combobox', { name: 'Choose a map' }).selectOption('rally');
   await expect(page.locator('#course-name')).toHaveText('Rally tracking');
   await expect(page.locator('#course-count')).toContainText('Lap 1');
   await expect(page.locator('#course-next')).toHaveText('Take off to start · Keep the car in frame');
-  await expect(page.locator('#map-boundary')).toHaveText('340 × 280 m · 300 m ceiling');
+  await expect(page.locator('#map-boundary')).toHaveText('740 × 680 m · 300 m ceiling');
   await expect(page.locator('#trees')).toBeHidden();
   await expect(page.locator('#observer-mode')).toHaveValue('fixed');
   await page.locator('#aids').click();
@@ -19,6 +19,11 @@ test('rally tracking moves the visible subject, freezes on pause, resets, and wo
   await page.locator('#capture').click(); await expect(page.locator('#photos img')).toHaveCount(1);
   await expect(page.locator('#camera-view')).not.toHaveClass(/flash/);
   await page.locator('#camera-view').screenshot({ path: 'test-results/rally-tracking-camera.png' });
+  // GPU readback can trigger the simulator's stall guard on software rendering.
+  if (await page.locator('#flight-status').getAttribute('data-paused') === 'true') {
+    await expect(page.locator('#pause-reason')).toContainText('Display stalled');
+    await page.locator('#pause').click();
+  }
   // A stationary camera must lose the moving car; framing cannot cache the old target.
   await expect(page.locator('#framing')).toHaveAttribute('aria-label', 'Subject not framed', { timeout: 10_000 });
   await expect(page.locator('#course-next')).toContainText('Streak 0.0 s');

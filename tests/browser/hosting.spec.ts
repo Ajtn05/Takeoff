@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('hosted wireless pairing controls only its own station and renewing the link revokes the phone', async ({ page, browser, baseURL }) => {
   const errors: string[] = []; page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.locator('#pair').click();
   await expect(page.locator('#connection-path')).toHaveValue('wireless');
   await expect(page.locator('#connection-path option')).toHaveCount(1);
@@ -14,7 +14,7 @@ test('hosted wireless pairing controls only its own station and renewing the lin
   await page.locator('#close-pair').click();
   const stationContext = await browser.newContext(), phoneContext = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
   try {
-    const second = await stationContext.newPage(); await second.goto(baseURL!);
+    const second = await stationContext.newPage(); await second.goto(new URL('/practice', baseURL!).href);
     await expect(second.locator('#connection-status')).toContainText('Keyboard');
     await second.locator('#pair').click();
     const secondUrl = await second.locator('#pair-url').inputValue(); expect(secondUrl).not.toBe(url);
@@ -37,7 +37,7 @@ test('hosted wireless pairing controls only its own station and renewing the lin
 
 test('an unavailable relay leaves keyboard flight usable and offers a pairing retry', async ({ page }) => {
   await page.route('**/api/session', (route) => route.fulfill({ status: 429, contentType: 'application/json', body: JSON.stringify({ error: 'All practice stations are in use. Try again shortly.' }) }));
-  await page.goto('/');
+  await page.goto('/practice');
   await expect(page.locator('#connection-status')).toContainText('Keyboard · phone pairing unavailable');
   await expect(page.locator('.world-canvas')).toBeVisible();
   await page.locator('#takeoff').click();

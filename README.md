@@ -8,6 +8,14 @@ Takeoff is a browser-based drone simulator that turns your laptop into a flight 
 
 ![Takeoff flight station with adjustable observer and drone camera views and bottom flight instruments](docs/images/workspace.png)
 
+## Choose how to fly
+
+Takeoff opens to a menu with two modes. **Game → Flight Rush** is an endless scored course with a third-person follow view and a live drone-camera inset. **Practice tool** opens the existing flight station, maps, photo gallery, and adjustable views. Select the Takeoff logo to return to the menu.
+
+In Flight Rush, take off to begin. The course scrolls automatically while you fly with the same keyboard or phone controls as Practice. Each cycle asks for forward and backward movement, left and right strafing, climb and descent, yaw in both directions, a hover, camera tilt in both directions, and a beacon capture. Complete the requested maneuver and pass through the opening to earn points. The camera gates check tilt and the capture gate lights up when its beacon is in frame.
+
+Earn **2 points per meter**, **100 per gate**, and **50 extra for a centered pass**. Every four consecutive gates raises the multiplier, up to **×5**. You have **three shields**; a missed opening or incomplete maneuver costs one shield and breaks the streak. Ground contact or leaving the corridor ends the run. Every eight gates increases course speed and tightens the openings. Best scores are saved in this browser. **Space** pauses/resumes, **L** (or the phone’s Land button) banks the score and ends the run, and **Restart run** resets the course. Flight Rush uses fixed trainer handling so scores do not depend on your Practice aircraft settings.
+
 ## Choose your next flight
 
 | Map | What you'll do |
@@ -46,7 +54,7 @@ Takeoff is a working prototype with an assisted-flight model, approximate aircra
 
 Open [Takeoff on Render](https://takeoff-0qrz.onrender.com/) on your laptop. No local installation is needed:
 
-1. Use a current WebGL 2 browser. Keyboard flight is available immediately.
+1. Use a current WebGL 2 browser. Choose **Game** or **Practice tool** from the menu. Keyboard flight is available in both.
 2. To use a phone, select **Pair phone** and scan the QR code with the phone camera, or use **Copy phone link** to open the full link on the phone.
 3. Rotate the phone to landscape, center both sticks, and select **Enable controls**.
 4. Close the pairing dialog on the laptop, then select **Take off** on either device.
@@ -79,7 +87,7 @@ npm run build
 npm start
 ```
 
-Open [http://127.0.0.1:8080](http://127.0.0.1:8080) on the laptop. Leave the terminal running while you practice; press **Ctrl+C** there when you are finished. Future sessions only need `npm start`, unless the app has changed and needs rebuilding.
+Open [http://127.0.0.1:8080](http://127.0.0.1:8080) on the laptop and choose **Game** or **Practice tool**. Leave the terminal running while you fly; press **Ctrl+C** there when you are finished. Future sessions only need `npm start`, unless the app has changed and needs rebuilding.
 
 If port 8080 is already in use, choose another port:
 
@@ -91,7 +99,7 @@ Then open [http://127.0.0.1:8082](http://127.0.0.1:8082). Use that same port for
 
 ### Your first flight with the keyboard
 
-1. Leave **Controls** set to **Keyboard**.
+1. Choose **Practice tool** from the menu and leave **Controls** set to **Keyboard**.
 2. Select **Take off**, or press **T**. The drone climbs automatically to 3 m.
 3. Hold **W** briefly to climb toward 4 m, then release it. Watch the drone brake into a hover.
 4. Use the **arrow keys** to move and **A / D** to turn. Compare the observer and camera views.

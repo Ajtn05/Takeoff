@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('helicopter preset changes the aircraft, reaches F1 pace, saves custom tuning and restores the trainer', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.locator('#map').selectOption('silverstone');
   await expect(page.locator('#map-tip')).toHaveAttribute('aria-description', /1 km of open approach space/);
   const setup = page.getByRole('button', { name: 'Drone parameters', exact: true });

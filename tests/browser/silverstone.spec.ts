@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test('Silverstone renders the F1 car, tracks airborne laps, freezes, captures and resets across layouts', async ({ page }) => {
   test.setTimeout(60_000);
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.locator('#map').selectOption('silverstone');
   await expect(page.locator('.world-canvas')).toHaveAttribute('aria-label', 'Silverstone · Formula One rendered from the observer and drone cameras');
   await expect(page.locator('#course-name')).toHaveText('Formula One tracking');

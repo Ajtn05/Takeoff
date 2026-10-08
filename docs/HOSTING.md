@@ -15,18 +15,18 @@ After these changes are pushed, you can also use [Deploy to Render](https://rend
 
 If configuring a Web Service manually, use these settings:
 
-| Setting | Value |
-| --- | --- |
-| Runtime | Node |
-| Instance | Free |
-| Region | Singapore (for learners in the Philippines) |
-| Build command | `npm ci --include=dev && npm run build` |
-| Start command | `npm start` |
-| Health check | `/api/health` |
-| `NODE_ENV` | `production` |
-| `NODE_VERSION` | `24.21.0` |
-| `HOST` | `0.0.0.0` |
-| `DEPLOYMENT_MODE` | `hosted` |
+| Setting           | Value                                       |
+| ----------------- | ------------------------------------------- |
+| Runtime           | Node                                        |
+| Instance          | Free                                        |
+| Region            | Singapore (for learners in the Philippines) |
+| Build command     | `npm ci --include=dev && npm run build`     |
+| Start command     | `npm start`                                 |
+| Health check      | `/api/health`                               |
+| `NODE_ENV`        | `production`                                |
+| `NODE_VERSION`    | `24.21.0`                                   |
+| `HOST`            | `0.0.0.0`                                   |
+| `DEPLOYMENT_MODE` | `hosted`                                    |
 
 Do not set `PORT`; Render provides it. `RENDER_EXTERNAL_URL` is also provided automatically. If using a custom domain, set `PUBLIC_ORIGIN` to its HTTPS origin, such as `https://takeoff.example.org`, with no path or query, and use that domain on both devices.
 

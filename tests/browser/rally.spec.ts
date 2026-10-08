@@ -1,61 +1,94 @@
 import { test, expect } from '@playwright/test';
 
-test('rally tracking moves the visible subject, freezes on pause, resets, and works across layouts', async ({ page }) => {
+test('rally tracking moves the visible subject, freezes on pause, resets, and works across layouts', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
-  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/practice');
+  await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.getByRole('combobox', { name: 'Choose a map' }).selectOption('rally');
   await expect(page.locator('#course-name')).toHaveText('Rally tracking');
   await expect(page.locator('#course-count')).toContainText('Lap 1');
-  await expect(page.locator('#course-next')).toHaveText('Take off to start · Keep the car in frame');
+  await expect(page.locator('#course-next')).toHaveText(
+    'Take off to start · Keep the car in frame',
+  );
   await expect(page.locator('#map-boundary')).toHaveText('740 × 680 m · 300 m ceiling');
   await expect(page.locator('#trees')).toBeHidden();
   await expect(page.locator('#observer-mode')).toHaveValue('fixed');
   await page.locator('#aids').click();
   await page.locator('#takeoff').click();
-  await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying', { timeout: 10_000 });
+  await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying', {
+    timeout: 10_000,
+  });
   await expect(page.locator('#framing')).toHaveAttribute('aria-label', 'Subject in frame');
   await expect(page.locator('#course-next')).toContainText(/Best [1-9]/, { timeout: 5_000 });
-  await page.locator('#capture').click(); await expect(page.locator('#photos img')).toHaveCount(1);
+  await page.locator('#capture').click();
+  await expect(page.locator('#photos img')).toHaveCount(1);
   await expect(page.locator('#camera-view')).not.toHaveClass(/flash/);
   await page.locator('#camera-view').screenshot({ path: 'test-results/rally-tracking-camera.png' });
   // GPU readback can trigger the simulator's stall guard on software rendering.
-  if (await page.locator('#flight-status').getAttribute('data-paused') === 'true') {
+  if ((await page.locator('#flight-status').getAttribute('data-paused')) === 'true') {
     await expect(page.locator('#pause-reason')).toContainText('Display stalled');
     await page.locator('#pause').click();
   }
   // A stationary camera must lose the moving car; framing cannot cache the old target.
-  await expect(page.locator('#framing')).toHaveAttribute('aria-label', 'Subject not framed', { timeout: 10_000 });
+  await expect(page.locator('#framing')).toHaveAttribute('aria-label', 'Subject not framed', {
+    timeout: 10_000,
+  });
   await expect(page.locator('#course-next')).toContainText('Streak 0.0 s');
   await page.locator('#pause').click();
   await expect(page.locator('#flight-status')).toHaveAttribute('data-paused', 'true');
   const pausedStats = await page.locator('#course-progress').innerText();
   const frozen = await page.locator('#camera-view').screenshot();
-  await page.screenshot({ path: 'test-results/rally-tracking-desktop.png', fullPage: true, style: '#toast { visibility: hidden; }' });
+  await page.screenshot({
+    path: 'test-results/rally-tracking-desktop.png',
+    fullPage: true,
+    style: '#toast { visibility: hidden; }',
+  });
   expect(await page.locator('#camera-view').screenshot()).toEqual(frozen);
   expect(await page.locator('#course-progress').innerText()).toBe(pausedStats);
   await page.locator('#pause').click();
   await expect.poll(() => page.locator('#course-progress').innerText()).not.toBe(pausedStats);
   await page.locator('#reset').click();
-  await expect(page.locator('#course-next')).toHaveText('Take off to start · Keep the car in frame');
+  await expect(page.locator('#course-next')).toHaveText(
+    'Take off to start · Keep the car in frame',
+  );
   await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'grounded');
   await expect(page.locator('#course-count')).toContainText('Lap 1');
   await page.getByRole('button', { name: 'Camera only', exact: true }).click();
-  await expect(page.locator('#course-progress')).toBeVisible(); await expect(page.locator('#observer-view')).toBeHidden();
+  await expect(page.locator('#course-progress')).toBeVisible();
+  await expect(page.locator('#observer-view')).toBeHidden();
   await page.getByRole('button', { name: 'Side by side', exact: true }).click();
-  await page.locator('#simulator-fullscreen').click(); await expect(page.locator('#course-progress')).toBeVisible();
-  await page.screenshot({ path: 'test-results/rally-tracking-fullscreen.png', style: '#toast { visibility: hidden; }' });
+  await page.locator('#simulator-fullscreen').click();
+  await expect(page.locator('#course-progress')).toBeVisible();
+  await page.screenshot({
+    path: 'test-results/rally-tracking-fullscreen.png',
+    style: '#toast { visibility: hidden; }',
+  });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator('#course-progress')).toBeVisible();
-  const progress = (await page.locator('#course-progress').boundingBox())!, camera = (await page.locator('#camera-column').boundingBox())!;
+  const progress = (await page.locator('#course-progress').boundingBox())!,
+    camera = (await page.locator('#camera-column').boundingBox())!;
   expect(progress.y).toBeGreaterThan(camera.y + camera.height);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
-  await page.screenshot({ path: 'test-results/rally-tracking-mobile-fullscreen.png', style: '#toast { visibility: hidden; }' });
+  await page.screenshot({
+    path: 'test-results/rally-tracking-mobile-fullscreen.png',
+    style: '#toast { visibility: hidden; }',
+  });
   await page.locator('#simulator-fullscreen').click();
-  await page.screenshot({ path: 'test-results/rally-tracking-mobile.png', fullPage: true, style: '#toast { visibility: hidden; }' });
-  await page.locator('#map').selectOption('park'); await expect(page.locator('#course-progress')).toBeHidden();
+  await page.screenshot({
+    path: 'test-results/rally-tracking-mobile.png',
+    fullPage: true,
+    style: '#toast { visibility: hidden; }',
+  });
+  await page.locator('#map').selectOption('park');
+  await expect(page.locator('#course-progress')).toBeHidden();
   await page.locator('#map').selectOption('rally');
-  await expect(page.locator('#course-next')).toHaveText('Take off to start · Keep the car in frame');
+  await expect(page.locator('#course-next')).toHaveText(
+    'Take off to start · Keep the car in frame',
+  );
   await expect(page.locator('#photos img')).toHaveCount(1);
   expect(errors).toEqual([]);
 });

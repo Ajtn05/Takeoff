@@ -15,5 +15,9 @@ export default defineConfig({
     trace: 'retain-on-failure',
     launchOptions: { args: ['--enable-unsafe-swiftshader'] },
   },
-  webServer: { command: 'PORT=8081 npm start', url: 'http://127.0.0.1:8081/api/health', reuseExistingServer: false },
+  webServer: {
+    command: 'PORT=8081 npm start',
+    url: 'http://127.0.0.1:8081/api/health',
+    reuseExistingServer: false,
+  },
 });

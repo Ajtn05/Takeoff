@@ -5,4 +5,12 @@ dist-server/
 .vite/
 test-results/
 playwright-report/
+__pycache__/
+*.py[cod]
+*.tsbuildinfo
+npm-debug.log*
+.DS_Store
+.env
+.env.*
+!.env.example
 *.local

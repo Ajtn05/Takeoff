@@ -1,11 +1,18 @@
 import { test, expect } from '@playwright/test';
 
-test('helicopter preset changes the aircraft, reaches F1 pace, saves custom tuning and restores the trainer', async ({ page }) => {
+test('helicopter preset changes the aircraft, reaches F1 pace, saves custom tuning and restores the trainer', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
-  const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
-  await page.goto('/practice'); await expect(page.locator('#connection-status')).toContainText('Keyboard');
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/practice');
+  await expect(page.locator('#connection-status')).toContainText('Keyboard');
   await page.locator('#map').selectOption('silverstone');
-  await expect(page.locator('#map-tip')).toHaveAttribute('aria-description', /1 km of open approach space/);
+  await expect(page.locator('#map-tip')).toHaveAttribute(
+    'aria-description',
+    /1 km of open approach space/,
+  );
   const setup = page.getByRole('button', { name: 'Drone parameters', exact: true });
   await setup.click();
   await page.getByLabel('Drone preset', { exact: true }).selectOption('tracking-helicopter');
@@ -17,38 +24,60 @@ test('helicopter preset changes the aircraft, reaches F1 pace, saves custom tuni
   await expect(page.locator('.world-canvas')).toHaveAttribute('data-aircraft-type', 'helicopter');
   await expect(page.locator('#flight-speed')).toHaveValue('90');
   await expect(page.locator('#altitude')).toContainText('0.0');
-  await setup.click(); await page.getByLabel('Drone preset', { exact: true }).selectOption('generic');
+  await setup.click();
+  await page.getByLabel('Drone preset', { exact: true }).selectOption('generic');
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(page.locator('.world-canvas')).toHaveAttribute('data-aircraft-type', 'helicopter');
   await expect(page.locator('#flight-speed')).toHaveValue('90');
   await page.locator('#observer-mode').selectOption('follow');
   await page.locator('#takeoff').click();
-  await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying', { timeout: 10_000 });
+  await expect(page.locator('#flight-status')).toHaveAttribute('data-mode', 'flying', {
+    timeout: 10_000,
+  });
   await expect(page.locator('#altitude')).toContainText('3.0');
   await page.locator('#pause').click();
-  await page.screenshot({ path: 'test-results/helicopter-silverstone.png', fullPage: true, style: '#toast { visibility: hidden; }' });
-  await page.locator('#pause').click(); await page.locator('#stage').focus();
+  await page.screenshot({
+    path: 'test-results/helicopter-silverstone.png',
+    fullPage: true,
+    style: '#toast { visibility: hidden; }',
+  });
+  await page.locator('#pause').click();
+  await page.locator('#stage').focus();
   await page.keyboard.down('w');
-  await expect.poll(async () => parseFloat(await page.locator('#altitude').innerText()), { timeout: 8_000 }).toBeGreaterThan(50);
+  await expect
+    .poll(async () => parseFloat(await page.locator('#altitude').innerText()), { timeout: 8_000 })
+    .toBeGreaterThan(50);
   await page.keyboard.up('w');
   await page.keyboard.down('ArrowUp');
-  await expect.poll(async () => parseFloat(await page.locator('#speed').innerText()), { timeout: 8_000 }).toBe(90);
+  await expect
+    .poll(async () => parseFloat(await page.locator('#speed').innerText()), { timeout: 8_000 })
+    .toBe(90);
   await page.locator('#flight-speed').selectOption('85');
   await expect.poll(async () => parseFloat(await page.locator('#speed').innerText())).toBe(85);
   await page.keyboard.up('ArrowUp');
   await page.locator('#pause').click();
   await page.locator('#observer-mode').selectOption('overview');
-  await page.screenshot({ path: 'test-results/silverstone-expanded-overview.png', fullPage: true, style: '#toast { visibility: hidden; }' });
-  await setup.click(); await page.getByLabel('Horizontal speed', { exact: true }).fill('85');
+  await page.screenshot({
+    path: 'test-results/silverstone-expanded-overview.png',
+    fullPage: true,
+    style: '#toast { visibility: hidden; }',
+  });
+  await setup.click();
+  await page.getByLabel('Horizontal speed', { exact: true }).fill('85');
   await expect(page.locator('#drone-preset')).toHaveValue('custom');
-  await expect(page.locator('#drone-preset option[value="custom"]')).toHaveText('Custom helicopter');
+  await expect(page.locator('#drone-preset option[value="custom"]')).toHaveText(
+    'Custom helicopter',
+  );
   await page.getByRole('button', { name: 'Apply settings' }).click();
   await page.reload();
   await expect(page.locator('.world-canvas')).toHaveAttribute('data-aircraft-type', 'helicopter');
   await expect(page.locator('#flight-speed')).toHaveValue('85');
   await page.locator('#map').selectOption('silverstone');
-  await setup.click(); await expect(page.locator('#drone-preset')).toHaveValue('custom');
-  await expect(page.locator('#drone-preset option[value="custom"]')).toHaveText('Custom helicopter');
+  await setup.click();
+  await expect(page.locator('#drone-preset')).toHaveValue('custom');
+  await expect(page.locator('#drone-preset option[value="custom"]')).toHaveText(
+    'Custom helicopter',
+  );
   await page.getByRole('button', { name: 'Restore trainer defaults' }).click();
   await page.getByRole('button', { name: 'Apply settings' }).click();
   await expect(page.locator('.world-canvas')).toHaveAttribute('data-aircraft-type', 'quadcopter');

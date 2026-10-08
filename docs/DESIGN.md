@@ -12,15 +12,15 @@ Anthropic describes how underspecified frontend requests converge on familiar fo
 
 Our review of Takeoff identified small text, blue tint across nearly every surface, excessive monospace labels, and decorative camera brackets as the relevant risks. The app already avoids marketing heroes, repeated feature cards, promotional copy, and invented statistics.
 
-| Pattern to avoid | Decision for Takeoff |
-| --- | --- |
-| A generic landing-page structure | Open directly into the flight workspace. Give the views most of the available space. |
-| Accent color applied everywhere | Use neutral graphite surfaces. Cyan identifies selected controls, focus, and the primary action; amber and red indicate actual flight states. |
-| Tiny labels and tracked capitals used to suggest technical depth | Use readable sans-serif labels. Keep monospace and tabular numerals for telemetry and performance measurements. |
-| Decorative HUD furniture | Retain the composition grid, center mark, and framing feedback. Avoid corner brackets, fake scan lines, ornamental gauges, and invented station identifiers. |
-| Decorative effects without a functional role | Confine glass to flight instruments. Use dark backing for legibility, subtle neutral bevels to identify controls, and borders and shadows to separate components. |
-| Icons that require guesswork | Use consistent SVG icons, accessible names, keyboard focus, and descriptive context. Keep flight state, connection state, units, and menu values visible. |
-| A polished screenshot with incomplete behavior | Check resizing, fullscreen, keyboard use, touch input, disabled actions, disconnection, and real photo export. |
+| Pattern to avoid                                                 | Decision for Takeoff                                                                                                                                              |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A generic landing-page structure                                 | Open directly into the flight workspace. Give the views most of the available space.                                                                              |
+| Accent color applied everywhere                                  | Use neutral graphite surfaces. Cyan identifies selected controls, focus, and the primary action; amber and red indicate actual flight states.                     |
+| Tiny labels and tracked capitals used to suggest technical depth | Use readable sans-serif labels. Keep monospace and tabular numerals for telemetry and performance measurements.                                                   |
+| Decorative HUD furniture                                         | Retain the composition grid, center mark, and framing feedback. Avoid corner brackets, fake scan lines, ornamental gauges, and invented station identifiers.      |
+| Decorative effects without a functional role                     | Confine glass to flight instruments. Use dark backing for legibility, subtle neutral bevels to identify controls, and borders and shadows to separate components. |
+| Icons that require guesswork                                     | Use consistent SVG icons, accessible names, keyboard focus, and descriptive context. Keep flight state, connection state, units, and menu values visible.         |
+| A polished screenshot with incomplete behavior                   | Check resizing, fullscreen, keyboard use, touch input, disabled actions, disconnection, and real photo export.                                                    |
 
 ## Interaction and readability
 

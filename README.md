@@ -18,12 +18,12 @@ Earn **2 points per meter**, **100 per gate**, and **50 extra for a centered pas
 
 ## Choose your next flight
 
-| Map | What you'll do |
-| --- | --- |
-| **Practice park** | Explore the sculpture plaza, then tackle **Hoop slalom**, **Window gaps**, or **Tight corridor**. Clear numbered gates through turns, altitude changes, and shrinking openings. |
-| **Rally circuit** | Follow a moving rally car around a gravel circuit. Keep it in frame through the hairpins and try to beat your best tracking streak. |
-| **Silverstone · Formula One** | Track an F1 car around an approximate **5.891 km** Grand Prix layout. Take the **Tracking helicopter** for flights at up to **90 m/s**. |
-| **Ateneo · Loyola Heights** | Launch near **ten campus landmarks**, explore modeled terrain and acacia-lined roads, and compose architectural shots around Gesù, Areté, Rizal Library, and more. |
+| Map                           | What you'll do                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Practice park**             | Explore the sculpture plaza, then tackle **Hoop slalom**, **Window gaps**, or **Tight corridor**. Clear numbered gates through turns, altitude changes, and shrinking openings. |
+| **Rally circuit**             | Follow a moving rally car around a gravel circuit. Keep it in frame through the hairpins and try to beat your best tracking streak.                                             |
+| **Silverstone · Formula One** | Track an F1 car around an approximate **5.891 km** Grand Prix layout. Take the **Tracking helicopter** for flights at up to **90 m/s**.                                         |
+| **Ateneo · Loyola Heights**   | Launch near **ten campus landmarks**, explore modeled terrain and acacia-lined roads, and compose architectural shots around Gesù, Areté, Rizal Library, and more.              |
 
 <table>
   <tr>
@@ -189,26 +189,26 @@ To return to keyboard practice, choose **Keyboard** in the laptop's **Controls**
 
 The phone's **Stick mode** menu follows the layouts in [DJI's remote controller guide](https://developer.dji.com/mobile-sdk/documentation/introduction/component-guide-remotecontroller.html). **Mode 2** is the default. The selected mode is saved in the phone browser. Changing it centers both sticks and pauses controls; select **Enable controls**, then take off from the ground or tap **Resume game** on the phone.
 
-| Stick mode | Left stick up / down | Left stick left / right | Right stick up / down | Right stick left / right |
-| --- | --- | --- | --- | --- |
-| Mode 1 | Pitch | Yaw | Throttle | Roll |
-| Mode 2 · Default | Throttle | Yaw | Pitch | Roll |
-| Mode 3 | Pitch | Roll | Throttle | Yaw |
+| Stick mode       | Left stick up / down | Left stick left / right | Right stick up / down | Right stick left / right |
+| ---------------- | -------------------- | ----------------------- | --------------------- | ------------------------ |
+| Mode 1           | Pitch                | Yaw                     | Throttle              | Roll                     |
+| Mode 2 · Default | Throttle             | Yaw                     | Pitch                 | Roll                     |
+| Mode 3           | Pitch                | Roll                    | Throttle              | Yaw                      |
 
 Throttle commands climb / descent, yaw turns the drone, pitch commands forward / backward movement, and roll commands sideways movement in this assisted-flight simulator. DJI's Mobile SDK mobile remote controller itself supports only Mode 2; Modes 1 and 3 here are simulator practice layouts.
 
 The action table below uses Mode 2.
 
-| Action | Phone | Keyboard |
-| --- | --- | --- |
-| Climb / descend | Left stick up / down | W / S |
-| Turn left / right | Left stick left / right | A / D |
-| Move forward / backward | Right stick up / down | ↑ / ↓ |
-| Move sideways left / right | Right stick left / right | ← / → |
-| Tilt camera up / down | Hold the Tilt buttons | R / F, or Camera tilt slider |
-| Take off / land | Take off / Land buttons | T / L |
-| Take a photo | Camera shutter button | C |
-| Pause / resume | Pause controls / Enable controls, then Resume game | Space |
+| Action                     | Phone                                              | Keyboard                     |
+| -------------------------- | -------------------------------------------------- | ---------------------------- |
+| Climb / descend            | Left stick up / down                               | W / S                        |
+| Turn left / right          | Left stick left / right                            | A / D                        |
+| Move forward / backward    | Right stick up / down                              | ↑ / ↓                        |
+| Move sideways left / right | Right stick left / right                           | ← / →                        |
+| Tilt camera up / down      | Hold the Tilt buttons                              | R / F, or Camera tilt slider |
+| Take off / land            | Take off / Land buttons                            | T / L                        |
+| Take a photo               | Camera shutter button                              | C                            |
+| Pause / resume             | Pause controls / Enable controls, then Resume game | Space                        |
 
 Movement follows the drone's heading. When the drone faces you, its rightward movement appears leftward in the fixed observer view. Releasing the sticks or movement keys commands a stop, with a short braking response into hover.
 
@@ -226,21 +226,21 @@ Keyboard flight requires focus on the simulator, away from menus and sliders. Th
 
 ### Views and flight information
 
-| Setting | Use it to |
-| --- | --- |
-| Fixed view | Drag to orbit, Shift-drag or right-drag to pan, and scroll to zoom. The viewpoint stays where you leave it. On touch screens, use one finger to orbit and two fingers to pan or pinch to zoom. |
-| Follow drone | Keep the observer camera near the drone as it moves. |
-| Map overview | See the whole selected map from above, with north toward the top. |
-| Observer aids | Show the ground grid, labels, flight trail, camera direction, and field-of-view outline. |
-| Thirds grid | Place subjects using a rule-of-thirds guide in the camera view. |
-| Campus trees | Show or hide the Ateneo acacias and their collisions. The setting is saved between visits. |
-| Side by side | Show both views with an adjustable divider. Drag the divider, or focus it and use arrow keys, to change the proportions. On narrow screens the views stack. |
-| Stacked | Arrange the observer above the camera with an adjustable horizontal divider. |
-| Camera only | Practice from the drone camera with flight instruments fixed at the bottom. |
-| Observer only | Use the full workspace for the observer, with flight instruments and capture controls still available. |
-| Classic | Use the original observer and camera sidebar arrangement, with flight instruments docked below the camera. |
-| Fullscreen | Fill the window with flight views, compact instruments, and flight controls; restore the desktop workspace when you exit. |
-| Low graphics | Disable shadows and reduce rendering resolution on slower hardware. |
+| Setting       | Use it to                                                                                                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fixed view    | Drag to orbit, Shift-drag or right-drag to pan, and scroll to zoom. The viewpoint stays where you leave it. On touch screens, use one finger to orbit and two fingers to pan or pinch to zoom. |
+| Follow drone  | Keep the observer camera near the drone as it moves.                                                                                                                                           |
+| Map overview  | See the whole selected map from above, with north toward the top.                                                                                                                              |
+| Observer aids | Show the ground grid, labels, flight trail, camera direction, and field-of-view outline.                                                                                                       |
+| Thirds grid   | Place subjects using a rule-of-thirds guide in the camera view.                                                                                                                                |
+| Campus trees  | Show or hide the Ateneo acacias and their collisions. The setting is saved between visits.                                                                                                     |
+| Side by side  | Show both views with an adjustable divider. Drag the divider, or focus it and use arrow keys, to change the proportions. On narrow screens the views stack.                                    |
+| Stacked       | Arrange the observer above the camera with an adjustable horizontal divider.                                                                                                                   |
+| Camera only   | Practice from the drone camera with flight instruments fixed at the bottom.                                                                                                                    |
+| Observer only | Use the full workspace for the observer, with flight instruments and capture controls still available.                                                                                         |
+| Classic       | Use the original observer and camera sidebar arrangement, with flight instruments docked below the camera.                                                                                     |
+| Fullscreen    | Fill the window with flight views, compact instruments, and flight controls; restore the desktop workspace when you exit.                                                                      |
+| Low graphics  | Disable shadows and reduce rendering resolution on slower hardware.                                                                                                                            |
 
 Select **Exit fullscreen** or press **Escape** to return to the normal layout. If native fullscreen is unavailable, the simulator expands within the browser panel instead.
 
@@ -264,11 +264,11 @@ Use **Map** above the views to choose **Practice park**, **Rally circuit · Trac
 
 In the park, the route menu offers **Sculpture plaza** for free flight and three obstacle courses:
 
-| Route | Challenge |
-| --- | --- |
-| Hoop slalom | Seven hoops with turns and altitude changes, rising to 9 m and descending again. Clear diameters shrink from 4.7 m to 2.3 m. |
-| Window gaps | Five walls with offset openings at different heights. The last window measures 1.6 × 1.6 m. |
-| Tight corridor | A covered passage with two right-angle turns, a low beam, and a 1.6 × 1.6 m exit. |
+| Route          | Challenge                                                                                                                    |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Hoop slalom    | Seven hoops with turns and altitude changes, rising to 9 m and descending again. Clear diameters shrink from 4.7 m to 2.3 m. |
+| Window gaps    | Five walls with offset openings at different heights. The last window measures 1.6 × 1.6 m.                                  |
+| Tight corridor | A covered passage with two right-angle turns, a low beam, and a 1.6 × 1.6 m exit.                                            |
 
 Choose a route to start at its entrance, then select **Take off**. Start with the **5 m/s** speed limit; brake before turns and small openings. Fly through the numbered gates in order and in the direction of the route. The next gate is pale gold, cleared gates turn green, and the flight view shows the count and the next gate's altitude and opening width. Observer aids add a dashed route through the gate centers. Hoops, wall edges, roofs, and beams are solid obstacles and remain visible with aids off. **Reset flight** returns to the selected entrance and clears route progress. You can explore all three courses from free flight; selecting one enables its progress tracking.
 
@@ -302,19 +302,19 @@ The gallery keeps the six most recent captures in memory. **Download any photos 
 
 ## Troubleshooting
 
-| Problem | What to check |
-| --- | --- |
-| Connection refused on the laptop | Confirm `npm start` is still running. Use the port selected at startup and run `npm run build` if the server says the app is missing. |
-| Connection refused on the phone over USB | Select **Connect USB phone** again. Then open `http://127.0.0.1:8080/api/health` on the phone, substituting your port. `{"ok":true}` confirms the USB path reaches the server; return to the full pairing URL to control the simulator. Use `http`, not `https`. |
-| No USB debugging prompt | Check `adb devices`. A device listed as `device` is already authorized and needs no new prompt. If it says `unauthorized`, unlock the phone, reconnect the cable, and check USB debugging. |
-| ADB is missing or no phone is found | Install Platform-Tools or set `ADB_PATH`. Check USB debugging and try a data-capable cable. If several USB devices are attached, leave only the intended phone connected. |
-| No Wi-Fi option, or Wi-Fi will not connect | Start with `npm run start:lan`, reload the laptop page, and pair using its Wi-Fi URL. Check the chosen network address and firewall. Networks with client isolation may require USB instead. |
-| Paired, but the sticks do nothing | Select **Enable controls** on the phone, then **Resume game** for an interrupted flight or **Take off** from the ground. Confirm **Controls** is set to **Phone** and that takeoff has finished. |
-| Keyboard keys do nothing | Select **Keyboard**, start practice, and return focus from a menu or slider to the simulator. |
-| Flight pauses after switching tabs or disconnecting | Return to both pages and close open laptop dialogs. For phone control, select **Enable controls**, then **Resume game** on the phone. For keyboard control, select **Start practice** on the laptop. |
-| Collision prevents resuming | Select **Reset**. For phone control, enable its controls again before selecting **Start practice**. |
-| Pairing link is rejected or another phone is connected | Select **Revoke phone & renew link** and pair using the new code. |
-| Rendering is slow | Enable **Low graphics** and close other demanding applications. If the browser reports a lost graphics context, reload and pair again. |
+| Problem                                                | What to check                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Connection refused on the laptop                       | Confirm `npm start` is still running. Use the port selected at startup and run `npm run build` if the server says the app is missing.                                                                                                                            |
+| Connection refused on the phone over USB               | Select **Connect USB phone** again. Then open `http://127.0.0.1:8080/api/health` on the phone, substituting your port. `{"ok":true}` confirms the USB path reaches the server; return to the full pairing URL to control the simulator. Use `http`, not `https`. |
+| No USB debugging prompt                                | Check `adb devices`. A device listed as `device` is already authorized and needs no new prompt. If it says `unauthorized`, unlock the phone, reconnect the cable, and check USB debugging.                                                                       |
+| ADB is missing or no phone is found                    | Install Platform-Tools or set `ADB_PATH`. Check USB debugging and try a data-capable cable. If several USB devices are attached, leave only the intended phone connected.                                                                                        |
+| No Wi-Fi option, or Wi-Fi will not connect             | Start with `npm run start:lan`, reload the laptop page, and pair using its Wi-Fi URL. Check the chosen network address and firewall. Networks with client isolation may require USB instead.                                                                     |
+| Paired, but the sticks do nothing                      | Select **Enable controls** on the phone, then **Resume game** for an interrupted flight or **Take off** from the ground. Confirm **Controls** is set to **Phone** and that takeoff has finished.                                                                 |
+| Keyboard keys do nothing                               | Select **Keyboard**, start practice, and return focus from a menu or slider to the simulator.                                                                                                                                                                    |
+| Flight pauses after switching tabs or disconnecting    | Return to both pages and close open laptop dialogs. For phone control, select **Enable controls**, then **Resume game** on the phone. For keyboard control, select **Start practice** on the laptop.                                                             |
+| Collision prevents resuming                            | Select **Reset**. For phone control, enable its controls again before selecting **Start practice**.                                                                                                                                                              |
+| Pairing link is rejected or another phone is connected | Select **Revoke phone & renew link** and pair using the new code.                                                                                                                                                                                                |
+| Rendering is slow                                      | Enable **Low graphics** and close other demanding applications. If the browser reports a lost graphics context, reload and pair again.                                                                                                                           |
 
 ## Current scope
 
@@ -334,9 +334,12 @@ npm run dev
 
 Use `npm run dev:lan` for Wi-Fi development or prefix either command with `PORT=8082` to change the port. The Node server serves the app and WebSocket connection together. Reload after editing; hot module replacement is disabled so code changes do not silently retain flight input.
 
+See the [codebase guide](docs/CODEBASE.md) for module responsibilities and conventions.
+
 ### Checks
 
 ```sh
+npm run format:check
 npm run check
 npm test
 npm run build
@@ -361,4 +364,4 @@ Screenshots and failure traces are written to `test-results/`. Browser emulation
 - Phone input expires after 250 ms in both the server and laptop. Page hiding, connection loss, send-queue overflow, and display stalls pause the exercise; resuming requires fresh input. Connection generations and sequence numbers reject old or repeated inputs.
 - Takeoff, landing, and capture use action IDs and acknowledgments so retries cannot execute the same action twice within a connection generation.
 
-The generic flight settings are in [src/simulation.ts](src/simulation.ts). The scene and camera rendering are in [src/world.ts](src/world.ts), and the phone controller is in [src/controller.ts](src/controller.ts).
+The generic flight settings are in [src/flight/simulation.ts](src/flight/simulation.ts). The scene and camera rendering are in [src/rendering/world.ts](src/rendering/world.ts), and the phone controller is in [src/pages/controller.ts](src/pages/controller.ts).

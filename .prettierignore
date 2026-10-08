@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dist-server/
+test-results/
+playwright-report/
+public/data/
+docs/images/
+package-lock.json
+IMPLEMENTATION_PLAN.md

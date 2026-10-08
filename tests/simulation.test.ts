@@ -9,7 +9,7 @@ import {
   GENERIC_PROFILE,
   GROUND_HEIGHT,
 } from '../src/flight/simulation';
-import { neutralControls, parseClientMessage } from '../shared/protocol';
+import { neutralControls, parseClientMessage, CONTROLLER_TIMEOUT_MS } from '../shared/protocol';
 import { RemoteInput } from '../src/flight/input';
 
 const close = (a: number, b: number, tolerance = 1e-6) =>
@@ -119,10 +119,18 @@ test('local input guard rejects old generations, replays, and expired input', ()
   assert.equal(input.accept(2, 1, { ...neutralControls(), right: 1 }, 100), true);
   assert.equal(input.accept(2, 1, neutralControls(), 120), false);
   assert.ok(input.fresh(350));
+  assert.equal(input.read(350).right, 1);
   assert.equal(input.fresh(351), false);
+  assert.deepEqual(input.read(351), neutralControls());
+  assert.equal(input.available(100 + CONTROLLER_TIMEOUT_MS), true);
+  assert.equal(input.available(101 + CONTROLLER_TIMEOUT_MS), false);
+  assert.equal(input.accept(2, 2, { ...neutralControls(), right: -1 }, 800), true);
+  assert.equal(input.read(800).right, -1);
   input.reset(3);
   assert.deepEqual(input.controls, neutralControls());
   assert.equal(input.fresh(150), false);
+  assert.equal(input.available(150), false);
+  assert.deepEqual(input.read(150), neutralControls());
 });
 test('protocol rejects malformed, non-finite, out-of-range and non-neutral resume controls', () => {
   assert.equal(parseClientMessage('not JSON'), null);
@@ -153,5 +161,13 @@ test('protocol rejects malformed, non-finite, out-of-range and non-neutral resum
       JSON.stringify({ type: 'input', generation: 1, seq: -1, controls: neutralControls() }),
     ),
     null,
+  );
+  assert.equal(
+    parseClientMessage(JSON.stringify({ type: 'suspend', reason: 'Delayed', recoverable: 'true' })),
+    null,
+  );
+  assert.deepEqual(
+    parseClientMessage(JSON.stringify({ type: 'suspend', reason: 'Delayed', recoverable: true })),
+    { type: 'suspend', reason: 'Delayed', recoverable: true },
   );
 });

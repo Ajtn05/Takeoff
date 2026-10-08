@@ -2,7 +2,7 @@ import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { WebSocket } from 'ws';
 import {
   HOST_TIMEOUT_MS,
-  INPUT_TIMEOUT_MS,
+  CONTROLLER_TIMEOUT_MS,
   MAX_QUEUE_BYTES,
   parseClientMessage,
   type ServerMessage,
@@ -69,18 +69,19 @@ export class SessionRelay {
     }
     socket.send(JSON.stringify(message));
   }
-  private notify(session: Session, reason: string): void {
+  private notify(session: Session, reason: string, recoverable = false): void {
     const message: ServerMessage = {
       type: 'connection',
       generation: session.generation,
       connected: !!session.controller,
       ready: session.ready,
       reason,
+      recoverable,
     };
     this.send(session.host, message);
     this.send(session.controller, message);
   }
-  private suspend(session: Session, reason: string): void {
+  private suspend(session: Session, reason: string, recoverable = false): void {
     session.generation++;
     session.ready = false;
     session.lastSeq = -1;
@@ -95,7 +96,7 @@ export class SessionRelay {
         });
     }
     session.actions.clear();
-    this.notify(session, reason);
+    this.notify(session, reason, recoverable);
   }
   checkTimeouts(): void {
     const now = this.now();
@@ -112,9 +113,13 @@ export class SessionRelay {
         continue;
       }
       if (session.ready && now - session.lastHostAt > HOST_TIMEOUT_MS)
-        this.suspend(session, 'Laptop stopped responding. Enable controls again.');
-      else if (session.ready && now - session.lastInputAt > INPUT_TIMEOUT_MS)
-        this.suspend(session, 'Controller input expired. Enable controls again.');
+        this.suspend(
+          session,
+          'Waiting for the laptop. Controls will reconnect automatically.',
+          true,
+        );
+      else if (session.ready && now - session.lastInputAt > CONTROLLER_TIMEOUT_MS)
+        this.suspend(session, 'Controller input delayed. Reconnecting controls…', true);
     }
   }
   attach(socket: WebSocket): void {
@@ -183,7 +188,7 @@ export class SessionRelay {
         return;
       }
       if (message.type === 'suspend') {
-        this.suspend(activeSession, message.reason);
+        this.suspend(activeSession, message.reason, message.recoverable);
         return;
       }
       if (role === 'host') this.fromHost(activeSession, message);
@@ -237,10 +242,10 @@ export class SessionRelay {
     if (!session.ready || !('generation' in message) || message.generation !== session.generation)
       return;
     if (
-      this.now() - session.lastInputAt > INPUT_TIMEOUT_MS ||
+      this.now() - session.lastInputAt > CONTROLLER_TIMEOUT_MS ||
       this.now() - session.lastHostAt > HOST_TIMEOUT_MS
     ) {
-      this.suspend(session, 'Connection expired. Enable controls again.');
+      this.suspend(session, 'Connection delayed. Reconnecting controls…', true);
       return;
     }
     if (message.type === 'input' && message.seq > session.lastSeq) {

@@ -248,6 +248,12 @@ npm start</pre>
             phone paired; enable controls again and take off. Restarting the server needs a new
             link.
           </p>
+          <p class="guide-note">
+            Brief connection delays center the sticks temporarily. Longer delays pause flight;
+            enabled controls reconnect automatically with centered sticks. Tap Resume game when
+            ready. Pause controls cancels recovery. Hidden pages, disconnected sockets, and manual
+            pauses require enabling controls again.
+          </p>
           <button id="guide-pair" class="button">${icon('phone')}<span>Open pairing</span></button>
         </section>
         <section

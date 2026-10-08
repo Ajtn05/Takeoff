@@ -4,6 +4,9 @@ import { WebSocket, type RawData } from 'ws';
 import { createTrainerServer } from '../server/app';
 import {
   PROTOCOL_VERSION,
+  INPUT_TIMEOUT_MS,
+  CONTROLLER_TIMEOUT_MS,
+  HOST_TIMEOUT_MS,
   neutralControls,
   type ClientMessage,
   type ServerMessage,
@@ -130,7 +133,26 @@ test('relay forwards ordered complete inputs and ignores old generations or dupl
     await f.close();
   }
 });
-test('250 ms stale-input pause invalidates generation and requires a new neutral handshake', async () => {
+test('brief input delays retain readiness and accept the next input without a new handshake', async () => {
+  const f = await fixture();
+  try {
+    f.s.lastInputAt = Date.now() - INPUT_TIMEOUT_MS - 300;
+    f.app.relay.checkTimeouts();
+    assert.equal(f.s.ready, true);
+    assert.equal(f.s.generation, f.generation);
+    f.phone.send({
+      type: 'input',
+      generation: f.generation,
+      seq: 1,
+      controls: neutralControls(),
+    });
+    await f.host.wait((m) => m.type === 'input' && m.generation === f.generation);
+    assert.equal(f.s.ready, true);
+  } finally {
+    await f.close();
+  }
+});
+test('a prolonged input gap invalidates generation and permits a new neutral recovery handshake', async () => {
   const f = await fixture();
   try {
     f.phone.send({
@@ -139,11 +161,15 @@ test('250 ms stale-input pause invalidates generation and requires a new neutral
       seq: 1,
       controls: { ...neutralControls(), forward: 1 },
     });
+    await f.host.wait((m) => m.type === 'input');
+    f.s.lastInputAt = Date.now() - CONTROLLER_TIMEOUT_MS - 1;
+    f.app.relay.checkTimeouts();
     const safety = (await f.phone.wait(
-      (m) => m.type === 'connection' && !m.ready && m.reason.includes('expired'),
+      (m) => m.type === 'connection' && !m.ready && m.recoverable === true,
     )) as Extract<ServerMessage, { type: 'connection' }>;
     assert.ok(safety.generation > f.generation);
     assert.equal(f.s.ready, false);
+    assert.equal(safety.recoverable, true);
     f.phone.send({
       type: 'input',
       generation: f.generation,
@@ -233,12 +259,25 @@ test('controller disconnection pauses, reconnecting rotates generation, and revo
     await f.close();
   }
 });
-test('laptop silence pauses even if the phone keeps streaming', async () => {
+test('laptop silence requests recovery even if the phone keeps streaming', async () => {
   const f = await fixture();
   try {
-    f.s.lastHostAt = Date.now() - 1000;
+    f.s.lastHostAt = Date.now() - HOST_TIMEOUT_MS - 1;
+    f.app.relay.checkTimeouts();
     f.phone.send({ type: 'input', generation: f.generation, seq: 1, controls: neutralControls() });
-    await f.phone.wait((m) => m.type === 'connection' && !m.ready && m.reason.includes('expired'));
+    await f.phone.wait((m) => m.type === 'connection' && !m.ready && m.recoverable === true);
+    assert.equal(f.s.ready, false);
+  } finally {
+    await f.close();
+  }
+});
+test('manual suspension cancels recovery while a telemetry timeout can request it', async () => {
+  const f = await fixture();
+  try {
+    f.phone.send({ type: 'suspend', reason: 'Telemetry delayed', recoverable: true });
+    await f.phone.wait((m) => m.type === 'connection' && m.recoverable === true);
+    f.phone.send({ type: 'suspend', reason: 'Controls paused by user' });
+    await f.phone.wait((m) => m.type === 'connection' && m.recoverable === false);
     assert.equal(f.s.ready, false);
   } finally {
     await f.close();

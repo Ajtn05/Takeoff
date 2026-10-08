@@ -468,8 +468,8 @@ export async function mount(app: HTMLElement): Promise<void> {
     const elapsed = now - previous;
     previous = now;
     if (elapsed > MAX_FRAME_MS && !paused) pause('Display stalled. Start practice to resume.');
-    if (!paused && source === 'phone' && !remote.fresh(now))
-      pause('Controller input expired. Enable controls again.');
+    if (!paused && source === 'phone' && !remote.available(now))
+      pause('Waiting for phone input. Resume when the connection returns.', false);
     let trackingSeconds = 0;
     clock.advance(elapsed, paused, (seconds) => {
       const before = { x: state.x, y: state.y, z: state.z };
@@ -484,7 +484,7 @@ export async function mount(app: HTMLElement): Promise<void> {
         : obstacles;
       stepFlight(
         state,
-        source === 'phone' ? remote.controls : keyboard.read(),
+        source === 'phone' ? remote.read(now) : keyboard.read(),
         seconds,
         profile,
         flightObstaclesNow,

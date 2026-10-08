@@ -78,6 +78,9 @@ export function mount(app: HTMLElement): void {
     return;
   }
   let ready = false;
+  let restoreControls = false;
+  let restoring = false;
+  let lastResumeAttempt = -Infinity;
   let generation = -1;
   let seq = 0;
   let welcomed = false;
@@ -96,8 +99,10 @@ export function mount(app: HTMLElement): void {
   const holds = new Map<number, number>();
   const sendInput = () => {
     if (!ready || document.hidden) return;
-    if (!socket.send({ type: 'input', generation, seq: ++seq, controls: { ...controls } }))
+    if (!socket.send({ type: 'input', generation, seq: ++seq, controls: { ...controls } })) {
+      restoreControls = restoring = false;
       deactivate('Connection unavailable. Enable controls after reconnecting.');
+    }
   };
   const left = new TouchStick(
     getElement('left-stick'),
@@ -127,7 +132,7 @@ export function mount(app: HTMLElement): void {
   };
   const updateButtons = () => {
     getElement<HTMLButtonElement>('enable').disabled = !welcomed || document.hidden;
-    getElement('enable').textContent = ready ? 'Pause controls' : 'Enable controls';
+    getElement('enable').textContent = ready || restoring ? 'Pause controls' : 'Enable controls';
     const active = ready && status && !status.paused;
     getElement<HTMLButtonElement>('phone-takeoff').disabled = !ready || status?.mode !== 'grounded';
     getElement<HTMLButtonElement>('phone-land').disabled = !active || status?.mode !== 'flying';
@@ -147,7 +152,9 @@ export function mount(app: HTMLElement): void {
         ? 'Reconnect your phone to resume.'
         : ready
           ? (resumeError ?? 'Tap Resume game to continue.')
-          : 'Center both sticks, enable controls, then tap Resume game.';
+          : restoring
+            ? 'Reconnecting controls with centered sticks. Then tap Resume game.'
+            : 'Center both sticks, enable controls, then tap Resume game.';
     if (getElement('phone-resume-hint').textContent !== hint)
       getElement('phone-resume-hint').textContent = hint;
     getElement<HTMLButtonElement>('phone-resume').hidden = !gamePaused || collided;
@@ -165,12 +172,18 @@ export function mount(app: HTMLElement): void {
     clear();
     pending.clear();
     getElement('phone-message').textContent = message;
-    getElement('phone-connection').textContent = welcomed ? 'Controls paused' : 'Disconnected';
+    getElement('phone-connection').textContent = welcomed
+      ? restoring
+        ? 'Restoring controls…'
+        : 'Controls paused'
+      : 'Disconnected';
     updateButtons();
   };
-  const suspend = (message: string) => {
+  const suspend = (message: string, recoverable = false) => {
+    if (!recoverable) restoreControls = false;
+    restoring = recoverable && restoreControls;
     clear();
-    socket.send({ type: 'suspend', reason: message });
+    socket.send({ type: 'suspend', reason: message, recoverable });
     deactivate(message);
   };
   pauseForLayout = () =>
@@ -183,6 +196,8 @@ export function mount(app: HTMLElement): void {
       deactivate('Connected. Enable controls to take off.');
     }
     if (message.type === 'connection') {
+      if (!message.ready && !message.recoverable) restoreControls = false;
+      restoring = !message.ready && !!message.recoverable && restoreControls;
       ready = false;
       clear();
       generation = message.generation;
@@ -193,7 +208,11 @@ export function mount(app: HTMLElement): void {
         lastStatus = performance.now();
         sendInput();
       }
-      getElement('phone-connection').textContent = ready ? 'Controls ready' : 'Controls paused';
+      getElement('phone-connection').textContent = ready
+        ? 'Controls ready'
+        : restoring
+          ? 'Restoring controls…'
+          : 'Controls paused';
       getElement('phone-message').textContent = message.reason;
       updateButtons();
     }
@@ -224,6 +243,7 @@ export function mount(app: HTMLElement): void {
     }
   };
   const socket = new TrainerSocket({ role: 'controller', sessionId, token }, receive, (message) => {
+    restoreControls = restoring = false;
     welcomed = false;
     deactivate(message);
   });
@@ -242,12 +262,14 @@ export function mount(app: HTMLElement): void {
     } else getElement('wake-status').textContent = 'Set screen timeout manually';
   };
   getElement('enable').onclick = () => {
-    if (ready) {
+    if (ready || restoring) {
       suspend('Phone controls paused. Enable controls to resume.');
       return;
     }
     clear();
     if (!isNeutral(controls)) return;
+    restoreControls = true;
+    lastResumeAttempt = performance.now();
     socket.send({ type: 'resume', generation, controls });
     void requestWake();
   };
@@ -312,7 +334,17 @@ export function mount(app: HTMLElement): void {
   const interval = setInterval(() => {
     const now = performance.now();
     if (ready && now - lastStatus > HOST_TIMEOUT_MS)
-      suspend('Laptop stopped responding. Enable controls again.');
+      suspend('Waiting for the laptop. Controls will reconnect automatically.', true);
+    if (
+      restoring &&
+      welcomed &&
+      !document.hidden &&
+      now - lastStatus <= HOST_TIMEOUT_MS &&
+      now - lastResumeAttempt >= 500
+    ) {
+      lastResumeAttempt = now;
+      socket.send({ type: 'resume', generation, controls: neutralControls() });
+    }
     sendInput();
     for (const [id, request] of pending) {
       if (now - request.at < 500) continue;

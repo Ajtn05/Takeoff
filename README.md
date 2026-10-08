@@ -179,6 +179,8 @@ Allow the local Node server through the Mac firewall if prompted. Guest or class
 
 **Pause controls** on the phone disables its input and pauses the flight. The phone shows a **Game paused** prompt during an interrupted flight. To continue, center the sticks and select **Enable controls**, then **Resume game** on the phone. If the drone is grounded, select **Take off** on either device. **Start practice** on the laptop also resumes flight. Use this same sequence after a cable disconnect, connection loss, or either page being hidden. Return to the laptop page and close any open dialogs before resuming; a collision requires **Reset flight** on the laptop.
 
+Brief network delays temporarily center the sticks instead of disabling controls. Input older than 250 ms is ignored; a 2-second input gap or 3-second lapse in laptop status pauses the flight. Previously enabled controls reconnect automatically with centered sticks when communication returns. Tap **Resume game** to continue a paused flight. **Pause controls** cancels automatic recovery; explicit pauses, hidden pages, and disconnected sockets still require **Enable controls**.
+
 Keep the phone awake. The controller requests a screen wake lock where supported; if it says **Set screen timeout manually**, adjust the phone's timeout. Plain HTTP over Wi-Fi cannot use this feature. **Fullscreen** on the phone hides browser controls where supported, and **Stick size** adjusts the touch areas.
 
 To replace the controlling phone, open **Pair phone** and select **Revoke phone & renew link**, then pair with the new QR code. A second phone cannot take over an occupied session. Reloading the laptop page retains pairing in the same tab and pauses controls. Links expire after 12 hours; after restarting the server or closing the laptop tab, use the current pairing link.
@@ -361,7 +363,7 @@ Screenshots and failure traces are written to `test-results/`. Browser emulation
 
 - The laptop browser owns flight state and runs the simulation at a fixed 60 Hz step. The phone sends complete control inputs at approximately 60 Hz plus immediate changes.
 - The Node server serves bundled assets, authenticates the laptop and phone session roles, and relays controls. Phone messages do not supply drone positions.
-- Phone input expires after 250 ms in both the server and laptop. Page hiding, connection loss, send-queue overflow, and display stalls pause the exercise; resuming requires fresh input. Connection generations and sequence numbers reject old or repeated inputs.
+- The laptop centers stick input after 250 ms without a fresh message. Controls tolerate a 2-second input gap and a 3-second lapse in laptop status before pausing, then recover automatically with a neutral handshake. Page hiding, connection loss, send-queue overflow, and display stalls pause the exercise; resuming requires fresh input. Connection generations and sequence numbers reject old or repeated inputs.
 - Takeoff, landing, and capture use action IDs and acknowledgments so retries cannot execute the same action twice within a connection generation.
 
 The generic flight settings are in [src/flight/simulation.ts](src/flight/simulation.ts). The scene and camera rendering are in [src/rendering/world.ts](src/rendering/world.ts), and the phone controller is in [src/pages/controller.ts](src/pages/controller.ts).

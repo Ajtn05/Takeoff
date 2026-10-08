@@ -236,10 +236,10 @@ export async function mount(app: HTMLElement): Promise<void> {
     const elapsed = now - previous;
     previous = now;
     if (elapsed > MAX_FRAME_MS && !paused) pause('Display stalled. Resume when ready.');
-    if (!paused && source === 'phone' && !remote.fresh(now))
-      pause('Phone input expired. Enable controls again.');
+    if (!paused && source === 'phone' && !remote.available(now))
+      pause('Waiting for phone input. Resume when the connection returns.', false);
     clock.advance(elapsed, paused, (seconds) => {
-      const input = source === 'phone' ? remote.controls : keyboard.read();
+      const input = source === 'phone' ? remote.read(now) : keyboard.read();
       const events = stepRush(run, input, seconds);
       animationTime += seconds * 1000;
       for (const event of events) {

@@ -1,5 +1,7 @@
 export const INPUT_TIMEOUT_MS = 250;
-export const HOST_TIMEOUT_MS = 700;
+// Stop applying stale stick positions quickly, but tolerate a brief network delay.
+export const CONTROLLER_TIMEOUT_MS = 2000;
+export const HOST_TIMEOUT_MS = 3000;
 export const MAX_QUEUE_BYTES = 16_384;
 export const PROTOCOL_VERSION = 1;
 
@@ -45,12 +47,19 @@ export type ClientMessage =
   | { type: 'action'; generation: number; id: string; action: Action }
   | { type: 'ack'; generation: number; id: string; ok: boolean; message: string }
   | { type: 'status'; status: Telemetry }
-  | { type: 'suspend'; reason: string }
+  | { type: 'suspend'; reason: string; recoverable?: boolean }
   | { type: 'revoke' }
   | { type: 'ping'; id: number };
 export type ServerMessage =
   | { type: 'welcome'; generation: number; role: 'host' | 'controller' }
-  | { type: 'connection'; generation: number; connected: boolean; ready: boolean; reason: string }
+  | {
+      type: 'connection';
+      generation: number;
+      connected: boolean;
+      ready: boolean;
+      reason: string;
+      recoverable?: boolean;
+    }
   | { type: 'input'; generation: number; seq: number; controls: Controls }
   | { type: 'action'; generation: number; id: string; action: Action }
   | { type: 'ack'; generation: number; id: string; ok: boolean; message: string }
@@ -144,7 +153,10 @@ export function parseClientMessage(raw: string): ClientMessage | null {
     case 'status':
       return validTelemetry(value.status) ? (value as ClientMessage) : null;
     case 'suspend':
-      return isShortString(value.reason) ? (value as ClientMessage) : null;
+      return isShortString(value.reason) &&
+        (value.recoverable === undefined || typeof value.recoverable === 'boolean')
+        ? (value as ClientMessage)
+        : null;
     case 'revoke':
       return value as ClientMessage;
     case 'ping':

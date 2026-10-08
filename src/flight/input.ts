@@ -1,4 +1,9 @@
-import { neutralControls, type Controls, INPUT_TIMEOUT_MS } from '../../shared/protocol';
+import {
+  neutralControls,
+  type Controls,
+  INPUT_TIMEOUT_MS,
+  CONTROLLER_TIMEOUT_MS,
+} from '../../shared/protocol';
 
 export class RemoteInput {
   generation = -1;
@@ -22,6 +27,12 @@ export class RemoteInput {
   }
   fresh(now: number): boolean {
     return this.ready && now - this.receivedAt <= INPUT_TIMEOUT_MS;
+  }
+  available(now: number): boolean {
+    return this.ready && now - this.receivedAt <= CONTROLLER_TIMEOUT_MS;
+  }
+  read(now: number): Controls {
+    return this.fresh(now) ? this.controls : neutralControls();
   }
 }
 

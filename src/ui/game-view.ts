@@ -3,7 +3,7 @@ import {
   gateZ,
   multiplier,
   nextRushGate,
-  runSpeed,
+  runPace,
   type RushRun,
 } from '../game/engine';
 import { icon } from './icons';
@@ -52,7 +52,7 @@ export function bindGameView(root: HTMLElement): (state: GameViewState) => void 
     getElement('game-shields').setAttribute('aria-label', `${run.shields} shields remaining`);
     getElement('game-level').textContent = String(run.level).padStart(2, '0');
     getElement('game-altitude').textContent = Math.max(0, run.drone.y - 0.065).toFixed(1);
-    getElement('game-speed').textContent = runSpeed(run).toFixed(1);
+    getElement('game-speed').textContent = runPace(run).toFixed(1);
     getElement('game-heading').textContent = String(
       Math.round((run.drone.heading * 180) / Math.PI) % 360,
     ).padStart(3, '0');

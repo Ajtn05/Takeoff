@@ -415,7 +415,7 @@ export class TrainingWorld {
   render(): void {
     resizeRenderer(this.renderer, this.stage);
     this.renderer.setScissorTest(false);
-    this.renderer.setClearColor('#181c20');
+    this.renderer.setClearColor('#0d2631');
     this.renderer.clear();
     this.renderer.setScissorTest(true);
     const fog = this.scene.fog;

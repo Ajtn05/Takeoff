@@ -36,6 +36,23 @@ body {
   margin: 0;
 }
 
+.takeoff-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #e6f0ec;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: 3px;
+}
+
+.takeoff-wordmark .ui-icon {
+  width: 25px;
+  height: 25px;
+  color: #c3f0a6;
+}
+
 button,
 input,
 select {

@@ -103,7 +103,8 @@ export function gameMarkup(): string {
       <span id="game-status" role="status">Ready to launch</span>
       <div>
         <span>ALT <b id="game-altitude">0.0</b> m</span
-        ><span>COURSE <b id="game-speed">7.0</b> m/s</span
+        ><span title="Forward pace through the course, including forward/backward input"
+          >PACE <b id="game-speed">7.0</b> m/s</span
         ><span>HDG <b id="game-heading">000</b>°</span
         ><span>TILT <b id="game-instrument-tilt">−12</b>°</span
         ><span title="Forward/backward position relative to the center of the flight corridor"
@@ -125,7 +126,9 @@ export function gameMarkup(): string {
       </div>
       <p>
         The course scrolls toward you automatically. Fly freely inside the corridor with the same
-        controls as Practice. The large view follows your drone; the inset shows its camera.
+        controls as Practice. Hold forward to go faster; the course follows your travel at the front
+        of the view. Pull backward to slow down safely. The large view follows your drone; the inset
+        shows its camera.
       </p>
       <p>
         Each gate asks for a move. Follow the cue, then pass through the opening. Forward gates need
@@ -142,8 +145,9 @@ export function gameMarkup(): string {
       <p>
         Earn 2 points per meter, 100 per gate, and 50 extra for a centered pass. Every four
         consecutive gates increases the multiplier, up to ×5. Missing an opening or its maneuver
-        costs one of three shields and resets the streak. Ground contact or leaving the corridor
-        ends the run. Every eight gates, the course gets faster and openings get tighter.
+        costs one of three shields and resets the streak. Ground contact or crossing the corridor’s
+        sides or ceiling ends the run. Every eight gates, the course gets faster and openings get
+        tighter.
       </p>
       <p>
         Take off starts a run. Space pauses or resumes. L or the phone’s Land button banks your

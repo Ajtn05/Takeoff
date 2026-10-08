@@ -38,7 +38,13 @@ test('runs score, pause without advancing, bank a result, retry, and remember th
     .toBeGreaterThan(5);
   await page.keyboard.down('ArrowUp');
   await expect(page.locator('#game-requirement')).toContainText('MOVE REGISTERED');
+  await expect(page.locator('#game-position')).toHaveText('AHEAD 14.0');
+  await expect(page.locator('#game-speed')).toHaveText('15.0');
+  await expect(page.locator('#game-move')).toHaveText('Strafe left');
+  await expect(page.locator('#game-stage')).toHaveAttribute('data-phase', 'running');
+  await expect(page.locator('#game-shields')).toHaveAttribute('aria-label', '3 shields remaining');
   await page.keyboard.up('ArrowUp');
+  await expect(page.locator('#game-speed')).toHaveText('7.0');
   await page.screenshot({ path: 'test-results/game-running.png', fullPage: true });
   await page.keyboard.press('Space');
   await expect(page.locator('#game-stage')).toHaveAttribute('data-phase', 'paused');
@@ -125,6 +131,13 @@ test('phone uses the existing sticks to launch, pause, and resume a game run', a
       touchPoints: [{ id: 1, x: stick.x + stick.width / 2, y: stick.y + stick.height * 0.15 }],
     });
     await expect(page.locator('#game-requirement')).toContainText('MOVE REGISTERED');
+    await expect(page.locator('#game-position')).toHaveText('AHEAD 14.0');
+    await expect(page.locator('#game-move')).toHaveText('Strafe left');
+    await expect(page.locator('#game-stage')).toHaveAttribute('data-phase', 'running');
+    await expect(page.locator('#game-shields')).toHaveAttribute(
+      'aria-label',
+      '3 shields remaining',
+    );
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await page.locator('#game-pause').click();
     await expect(phone.locator('#phone-pause-prompt')).toBeVisible();

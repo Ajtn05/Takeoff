@@ -6,12 +6,14 @@ import {
   beaconInFrame,
   captureRush,
   createRushRun,
+  GAME_BOUNDS,
   GAME_PROFILE,
   gateZ,
   launchRush,
   MANEUVERS,
   multiplier,
   nextRushGate,
+  runPace,
   runSpeed,
   stepRush,
   type RushRun,
@@ -51,6 +53,74 @@ test('launch takes off automatically and the course waits for the aircraft to re
   assert.equal(run.phase, 'running');
   assert.equal(run.drone.mode, 'flying');
   assert.equal(run.drone.y, 6);
+});
+
+test('holding forward advances the course beyond the front of the view without leaving the corridor', () => {
+  const run = airborne(),
+    idle = airborne(),
+    firstGate = nextRushGate(run)!;
+  for (let i = 0; i < 360; i++) {
+    stepRush(run, { ...neutralControls(), forward: 1 }, dt);
+    stepRush(idle, neutralControls(), dt);
+    assert.equal(run.phase, 'running', run.endReason);
+    assert.ok(run.drone.z >= GAME_BOUNDS.minZ);
+  }
+  assert.equal(run.drone.z, GAME_BOUNDS.minZ);
+  assert.equal(run.drone.vz, -GAME_PROFILE.speed);
+  assert.equal(runPace(run), runSpeed(run) + GAME_PROFILE.speed);
+  assert.ok(run.distance > idle.distance + 20);
+  assert.equal(firstGate.result, 'clear', 'the forward gate still checks the maneuver');
+  assert.equal(run.cleared, 1);
+  assert.equal(run.shields, 3);
+  for (let i = 0; i < 60; i++) stepRush(run, neutralControls(), dt);
+  assert.equal(run.phase, 'running');
+  assert.equal(run.drone.vz, 0);
+  assert.equal(runPace(run), runSpeed(run), 'release brakes back to the automatic pace');
+});
+
+test('backward travel stays in view, cannot reverse progress, and resumes scrolling on release', () => {
+  for (const heading of [0, Math.PI]) {
+    const run = airborne();
+    run.drone.heading = heading;
+    for (let i = 0; i < 360; i++) {
+      const distance = run.distance;
+      stepRush(run, { ...neutralControls(), forward: heading === 0 ? -1 : 1 }, dt);
+      assert.equal(run.phase, 'running', run.endReason);
+      assert.ok(run.drone.z <= GAME_BOUNDS.maxZ);
+      assert.ok(run.distance >= distance, 'course distance never goes backward');
+    }
+    assert.equal(run.drone.z, GAME_BOUNDS.maxZ);
+    assert.equal(runPace(run), 0);
+    const stoppedDistance = run.distance,
+      stoppedScore = run.score;
+    stepRush(run, { ...neutralControls(), forward: heading === 0 ? -1 : 1 }, dt);
+    assert.equal(run.distance, stoppedDistance);
+    assert.equal(run.score, stoppedScore);
+    for (let i = 0; i < 60; i++) stepRush(run, neutralControls(), dt);
+    assert.ok(run.distance > stoppedDistance);
+    assert.equal(run.drone.vz, 0);
+    assert.equal(runPace(run), runSpeed(run));
+  }
+});
+
+test('a fast gate crossing at the front of the view is scored once with its original approach gap', () => {
+  const run = airborne(),
+    gate = nextRushGate(run)!;
+  run.drone.z = GAME_BOUNDS.minZ;
+  run.drone.vz = -GAME_PROFILE.speed;
+  run.distance = gate.distance + run.drone.z - 0.1;
+  gate.evidence = 1;
+  const distance = run.distance;
+  const events = stepRush(run, { ...neutralControls(), forward: 1 }, 0.05);
+  assert.equal(run.phase, 'running');
+  assert.equal(run.drone.z, GAME_BOUNDS.minZ);
+  assert.ok(Math.abs(run.distance - distance - (runSpeed(run) + GAME_PROFILE.speed) * 0.05) < 1e-9);
+  assert.equal(events.filter((event) => event.kind === 'clear').length, 1);
+  assert.equal(run.cleared, 1);
+  assert.equal(run.shields, 3);
+  assert.equal(run.bonus, 150);
+  assert.deepEqual(stepRush(run, { ...neutralControls(), forward: 1 }, 0.05), []);
+  assert.equal(run.cleared, 1);
 });
 
 test('clearing a gate requires its maneuver, position, and full aircraft clearance', () => {
@@ -180,6 +250,13 @@ test('ground and corridor contact end the run, and invalid time steps have no ef
   run.drone.x = 13.99;
   run.drone.vx = 8;
   assert.equal(stepRush(run, { ...neutralControls(), right: 1 }, dt).at(-1)?.kind, 'over');
+  assert.match(run.endReason, /flight corridor/);
+  const ceiling = airborne();
+  ceiling.drone.y = GAME_BOUNDS.ceiling;
+  ceiling.drone.vy = GAME_PROFILE.climbRate;
+  stepRush(ceiling, { ...neutralControls(), climb: 1 }, dt);
+  assert.equal(ceiling.phase, 'over');
+  assert.match(ceiling.endReason, /flight corridor/);
   const ground = airborne();
   ground.drone.y = 0.07;
   ground.drone.vy = -5;

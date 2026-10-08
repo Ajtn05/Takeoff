@@ -1,23 +1,23 @@
 /* Desktop station styling is scoped so the touch controller keeps its layout. */
 .simulator {
-  --accent: #8ad6e3;
-  --muted: #a5aeb5;
-  --line: #343a40;
-  --panel: #1c2024;
-  --surface-raised: #252b30;
-  --text: #e7ebee;
-  --control-border: #65717b;
+  --accent: #c3f0a6;
+  --muted: #8ca8ad;
+  --line: #2a4148;
+  --panel: #152730;
+  --surface-raised: #1b333d;
+  --text: #e6f0ec;
+  --control-border: #3b5960;
   --text-xs: 11px;
   --text-sm: 12px;
   color: var(--text);
-  background: #131619;
+  background: #101a22;
   max-width: none;
-  padding: 0 28px;
+  padding: 0 22px;
   min-height: 100dvh;
 }
 .simulator .button,
 .simulator select {
-  border-radius: 4px;
+  border-radius: 7px;
   border-color: var(--control-border);
   background: var(--surface-raised);
   font-size: var(--text-sm);
@@ -27,30 +27,24 @@
   font-weight: 500;
 }
 .simulator .button.quiet {
-  background: linear-gradient(#343b42, #252b31);
-  border-color: #606c76;
-  color: #d0d8de;
-  box-shadow:
-    inset 0 1px #ffffff12,
-    inset 0 -1px #0005,
-    0 1px 2px #0005;
+  background: #122c36b3;
+  border-color: #64928950;
+  color: #bbd2d3;
+  box-shadow: none;
 }
 .simulator .button:hover:not(:disabled) {
-  background: #30373d;
+  background: #223e47;
   border-color: var(--control-border);
 }
 .simulator .button.primary {
-  background: linear-gradient(#a3e3ed, #7fc6d2);
-  border-color: #afedf5;
-  color: #0d2630;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #173129;
   font-weight: 650;
-  box-shadow:
-    inset 0 1px #fff6,
-    inset 0 -1px #183b4755,
-    0 1px 2px #0005;
+  box-shadow: none;
 }
 .simulator .button.primary:hover:not(:disabled) {
-  background: #ace5ee;
+  background: #d1f6b9;
 }
 .simulator select {
   padding: 7px 9px;
@@ -128,7 +122,7 @@
 .simulator .topbar {
   position: relative;
   z-index: 8;
-  min-height: 66px;
+  min-height: 74px;
   margin-bottom: 0;
   border-bottom: 1px solid var(--line);
   gap: 24px;
@@ -136,19 +130,16 @@
 .station-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
-.brand-mark {
-  width: 30px;
-  height: 30px;
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.4;
+.simulator .station-brand .ui-icon {
+  width: 25px;
+  height: 25px;
 }
 .simulator .app-title {
   font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-weight: 750;
+  letter-spacing: 3px;
   line-height: 1.2;
 }
 .simulator .toolbar {
@@ -177,7 +168,7 @@
 .simulator .observer-tools .icon-control {
   width: 32px;
   height: 32px;
-  background: #181c20;
+  background: #0d2631;
 }
 .fixed-view-hint {
   position: absolute;
@@ -186,9 +177,10 @@
   max-width: calc(100% - 28px);
   margin: 0;
   padding: 7px 9px;
-  border-radius: 3px;
-  background: #181c20e6;
-  color: #d0d8de;
+  border: 1px solid #7ba99b50;
+  border-radius: 6px;
+  background: #0d2631de;
+  color: #bbd2d3;
   font: 12px/1.5 var(--ui);
   pointer-events: none;
 }
@@ -202,7 +194,7 @@
   max-height: calc(100dvh - 32px);
   padding: 0;
   color: var(--text);
-  border-radius: 7px;
+  border-radius: 12px;
 }
 .station-dialog .dialog-header {
   padding: 20px 24px;
@@ -239,7 +231,7 @@
   gap: 5px;
   padding: 20px 12px;
   border-right: 1px solid var(--line);
-  background: #15191c;
+  background: #0f222c;
 }
 .guide-tabs button {
   min-height: 42px;
@@ -253,8 +245,8 @@
 }
 .guide-tabs button[aria-selected='true'] {
   color: var(--accent);
-  background: #25343a;
-  border-color: #567983;
+  background: #c3f0a614;
+  border-color: #688a65;
 }
 .guide-tabs button:hover {
   color: var(--text);
@@ -279,7 +271,7 @@
 .simulator .station-dialog p,
 .guide-content li,
 .guide-content dd {
-  color: #c4cdd4;
+  color: #a7c1c1;
   font: 14px/1.65 var(--ui);
   margin: 0 0 14px;
 }
@@ -306,17 +298,17 @@
   min-width: 23px;
   padding: 1px 5px;
   text-align: center;
-  border: 1px solid #65717b;
+  border: 1px solid #3b5960;
   border-radius: 3px;
   box-shadow: 0 1px #111;
-  background: #252b30;
+  background: #1b333d;
   color: var(--text);
   font: 12px/1.7 var(--mono);
 }
 .guide-content .guide-note {
   padding: 12px 14px;
   border-left: 2px solid var(--accent);
-  background: #151a1e;
+  background: #0f222c;
 }
 .guide-content details {
   margin-top: 24px;
@@ -331,14 +323,14 @@
 }
 .guide-content pre {
   padding: 14px;
-  background: #10161b;
+  background: #09212b;
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: 4px;
   font: 13px/1.8 var(--mono);
 }
 .guide-content code {
-  color: #d7e2e8;
+  color: #d2eac9;
   font-size: 12px;
   overflow-wrap: anywhere;
 }
@@ -369,7 +361,7 @@
   width: 32%;
 }
 .guide-table td {
-  color: #c4cdd4;
+  color: #a7c1c1;
 }
 .guide-tools {
   display: grid;
@@ -476,7 +468,7 @@
   padding: 7px 6px;
   border: 1px solid var(--control-border);
   border-radius: 3px;
-  background: #10161b;
+  background: #09212b;
   color: var(--text);
   font: 14px var(--mono);
 }
@@ -587,12 +579,10 @@
   align-items: center;
   gap: 6px;
   padding: 6px;
-  border: 1px solid #48525b;
-  border-radius: 6px;
-  background: linear-gradient(#292f35, #1c2126);
-  box-shadow:
-    inset 0 1px #ffffff0d,
-    0 2px 4px #0004;
+  border: 1px solid #31464d;
+  border-radius: 9px;
+  background: #152730;
+  box-shadow: none;
 }
 .simulator .map-strip {
   position: relative;
@@ -616,7 +606,7 @@
   min-width: 0;
   margin-left: auto;
   border: 0;
-  color: #bdc7ce;
+  color: #a3bdc0;
 }
 .workspace-bar {
   position: relative;
@@ -624,13 +614,13 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(#252a2f, #1c2024);
+  background: #152730;
   padding: 8px 10px;
-  border: 1px solid #46515a;
+  border: 1px solid #31464d;
   border-bottom: 0;
-  border-radius: 6px 6px 0 0;
+  border-radius: 12px 12px 0 0;
   min-height: 48px;
-  box-shadow: inset 0 1px #ffffff0b;
+  box-shadow: none;
 }
 .layout-presets {
   display: flex;
@@ -642,22 +632,20 @@
   transform: none;
 }
 .layout-option {
-  border: 1px solid #606c76;
-  border-radius: 3px;
-  background: linear-gradient(#343b42, #252b31);
-  color: #d0d8de;
-  box-shadow:
-    inset 0 1px #ffffff12,
-    inset 0 -1px #0005;
+  border: 1px solid #64928950;
+  border-radius: 6px;
+  background: #122c36b3;
+  color: #bbd2d3;
+  box-shadow: none;
 }
 .layout-option[aria-pressed='true'] {
-  background: #25343a;
+  background: #c3f0a614;
   color: var(--accent);
   border-color: var(--accent);
 }
 .layout-option:hover {
   color: var(--text);
-  background: #30373d;
+  background: #223e47;
 }
 .layout-option:focus-visible,
 .instrument-button:focus-visible {
@@ -665,7 +653,7 @@
   outline-offset: 2px;
 }
 .simulator .workspace-bar .button {
-  color: #d0d8de;
+  color: #bbd2d3;
 }
 .split-controls {
   display: flex;
@@ -679,21 +667,20 @@
   gap: 7px;
   margin-left: auto;
   padding: 8px 10px;
-  color: #c4ccd2;
-  font: var(--text-sm) var(--ui);
+  color: #b4cdcc;
+  font: 10px var(--mono);
+  letter-spacing: 0.8px;
   white-space: nowrap;
-  border: 1px solid #3a444d;
-  background: #11171b;
-  border-radius: 4px;
-  box-shadow:
-    inset 0 1px 3px #0008,
-    0 1px #ffffff08;
+  border: 1px solid #64928950;
+  background: #0b202a80;
+  border-radius: 6px;
+  box-shadow: none;
 }
 .flight-status[data-paused='true'] .dot {
-  background: #e5bd7f;
+  background: #e5c48b;
 }
 .flight-status[data-mode='collided'] .dot {
-  background: #ee8e85;
+  background: #ffb6a1;
 }
 .flight-status:focus-visible {
   outline: 2px solid var(--accent);
@@ -710,8 +697,8 @@
   min-height: 0;
   height: clamp(520px, calc(100dvh - 360px), 1100px);
   border: 1px solid var(--line);
-  border-radius: 0 0 4px 4px;
-  background: #181c20;
+  border-radius: 0 0 12px 12px;
+  background: #0d2631;
   max-width: none;
   margin: 0;
   isolation: isolate;
@@ -747,9 +734,9 @@
   top: 0;
   z-index: 2;
   padding: 12px 14px;
-  background: #181c20e6;
-  font: var(--text-sm) var(--ui);
-  letter-spacing: 0;
+  background: linear-gradient(#0c2631e6, #0c263180);
+  font: 10px var(--mono);
+  letter-spacing: 1.5px;
   align-items: center;
   gap: 8px;
   pointer-events: none;
@@ -765,7 +752,7 @@
   justify-content: center;
   min-width: 24px;
   min-height: 24px;
-  color: #bdc7ce;
+  color: #a3bdc0;
   pointer-events: auto;
 }
 .simulator .camera-spec .ui-icon {
@@ -781,13 +768,15 @@
   gap: 8px;
 }
 .simulator .view-heading > span {
-  background: #181c20e6;
-  border-radius: 3px;
-  padding: 7px 9px;
-  letter-spacing: 0;
+  background: #0d2631de;
+  border: 1px solid #7ba99b50;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: 10px var(--mono);
+  letter-spacing: 1.5px;
 }
 .simulator .view-heading select {
-  background: #181c20;
+  background: #0d2631;
   border-color: var(--control-border);
   font: var(--text-sm) var(--ui);
   padding: 7px 8px;
@@ -797,15 +786,15 @@
   left: 13px;
   right: 13px;
   font-size: 8px;
-  color: #d9e8ec;
+  color: #d2eac9;
   align-items: center;
 }
 .simulator .camera-caption #framing {
   display: inline-flex;
-  background: #181c20e6;
+  background: #0d2631e6;
   padding: 5px;
   border-radius: 3px;
-  color: #bdc7ce;
+  color: #a3bdc0;
 }
 .simulator .camera-caption #framing.framed {
   color: var(--accent);
@@ -815,7 +804,7 @@
 }
 .simulator .camera-crosshair {
   font-size: 19px;
-  color: #edfaffbb;
+  color: #e6f0ecbb;
   text-shadow: 0 0 3px #123;
 }
 .view-divider {
@@ -826,7 +815,7 @@
   left: calc(var(--view-split) - 5px);
   width: 10px;
   border-inline: 4px solid transparent;
-  background: #3e5664;
+  background: #37545a;
   background-clip: padding-box;
   cursor: col-resize;
   touch-action: none;
@@ -838,16 +827,16 @@
   width: 7px;
   height: 44px;
   flex: none;
-  border: 1px solid #87939d;
+  border: 1px solid #739c9980;
   border-radius: 3px;
-  background: #252b30;
+  background: #1b333d;
 }
 .view-divider span::after {
   content: '';
   display: block;
   height: 16px;
   width: 1px;
-  background: #c4ccd2;
+  background: #b4cdcc;
   margin: 12px auto;
 }
 .view-divider:hover,
@@ -871,18 +860,16 @@
   max-width: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  background: #1c2024;
+  background: #152730;
   border: 0;
-  border-top: 1px solid #70808c;
+  border-top: 1px solid #7ba99b50;
   border-radius: 0;
-  box-shadow:
-    inset 0 1px #ffffff15,
-    0 -3px 12px #0004;
+  box-shadow: 0 -8px 30px #071a2426;
   overflow: hidden;
   container-type: inline-size;
 }
 .flight-panel.is-glass {
-  background: #161a1ee6;
+  background: #0d2631de;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -892,15 +879,17 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  border-left: 1px solid #46505a;
+  border-left: 1px solid #739c9933;
   padding: 8px 12px;
-  background: linear-gradient(#394149c9, #222930c9);
-  box-shadow: inset 0 1px #ffffff12;
+  background: #0b202a40;
+  box-shadow: none;
 }
 .instrument-title {
   margin-right: 10px;
-  font: var(--text-sm) var(--ui);
-  color: #c4ccd2;
+  font: 10px var(--mono);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #b4cdcc;
 }
 .instrument-button {
   display: inline-flex;
@@ -908,14 +897,12 @@
   justify-content: center;
   width: 30px;
   height: 30px;
-  background: linear-gradient(#343b42, #252b31);
-  border: 1px solid #606c76;
-  border-radius: 3px;
+  background: #122c36b3;
+  border: 1px solid #64928950;
+  border-radius: 6px;
   padding: 0;
-  color: #d0d8de;
-  box-shadow:
-    inset 0 1px #ffffff12,
-    inset 0 -1px #0005;
+  color: #bbd2d3;
+  box-shadow: none;
 }
 .instrument-button .ui-icon {
   width: 15px;
@@ -940,38 +927,36 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .simulator .telemetry > div > span:first-child {
-  font: var(--text-xs) var(--ui);
-  color: #bac4cb;
+  font: 10px var(--mono);
+  color: #a3bdc0;
   text-transform: uppercase;
-  letter-spacing: 0;
+  letter-spacing: 1.8px;
   white-space: nowrap;
 }
 .simulator .telemetry strong {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  font: 24px var(--mono);
+  font: 500 26px var(--mono);
   font-variant-numeric: tabular-nums;
-  color: #f0f3f5;
+  color: #f0f5ec;
   margin-top: 7px;
-  padding: 7px 5px;
-  border: 1px solid #3d4851;
-  border-radius: 3px;
-  background: #10161be6;
-  box-shadow:
-    inset 0 1px 4px #0009,
-    0 1px #ffffff08;
-  letter-spacing: 0;
+  padding: 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  letter-spacing: -0.8px;
   white-space: nowrap;
 }
 .simulator .telemetry small {
   font: 10px var(--mono);
-  color: #bac4cb;
+  color: #a3bdc0;
   letter-spacing: 0;
 }
 .instrument-scale {
   height: 2px;
-  background: #63717b;
+  background: #37545a;
   margin-top: 10px;
 }
 .instrument-scale i {
@@ -984,8 +969,8 @@
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  border-top: 1px solid #3d4851;
-  background: #11171b55;
+  border-top: 1px solid #739c9933;
+  background: #0b202a55;
 }
 .simulator .gimbal-control {
   flex: 1;
@@ -996,7 +981,7 @@
   border: 0;
 }
 .simulator .gimbal-control label {
-  color: #bac4cb;
+  color: #a3bdc0;
   font: var(--text-xs) var(--ui);
   letter-spacing: 0;
   margin-bottom: 8px;
@@ -1015,12 +1000,12 @@
   border: 0;
   padding: 8px 14px;
   font: var(--text-xs) var(--mono);
-  color: #bac4cb;
+  color: #a3bdc0;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .instrument-footer strong {
-  color: #f0f3f5;
+  color: #f0f5ec;
   font-weight: 400;
 }
 .simulator .flight-strip {
@@ -1044,20 +1029,17 @@
   margin: 0 4px;
 }
 .simulator .shutter {
-  border-color: #7a8b98;
+  border-color: #7ba99b80;
   color: var(--text);
-  background: linear-gradient(#43515d, #2b3741);
-  box-shadow:
-    inset 0 1px #ffffff18,
-    inset 0 -1px #0005,
-    0 1px 2px #0005;
+  background: #25434a;
+  box-shadow: none;
 }
 .simulator .view-options {
   gap: 5px;
   align-items: center;
 }
 .simulator .icon-control[aria-pressed='true']:not(.primary) {
-  background: #25343a;
+  background: #c3f0a614;
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -1079,10 +1061,11 @@
   border: 0;
 }
 .simulator .section-label {
-  font: var(--text-xs) var(--ui);
+  font: 10px var(--mono);
   font-weight: 500;
-  letter-spacing: 0;
-  color: #bac4cb;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #8ca8ad;
 }
 .simulator .photo-library .section-label span {
   color: var(--text);
@@ -1098,7 +1081,7 @@
 .simulator footer {
   padding: 14px 0 18px;
   color: var(--muted);
-  font: var(--text-xs) var(--ui);
+  font: 10px var(--mono);
 }
 .simulator #performance {
   font-family: var(--mono);
@@ -1106,15 +1089,16 @@
 }
 .simulator .toast {
   z-index: 1100;
-  background: #e1e7eb;
-  color: #20272c;
-  border-radius: 4px;
+  background: #d5f4b7;
+  color: #173129;
+  border-radius: 8px;
   font-size: var(--text-sm);
 }
 .simulator dialog {
   background: var(--panel);
-  border-color: var(--control-border);
-  border-radius: 4px;
+  border-color: #72948965;
+  border-radius: 12px;
+  box-shadow: 0 20px 70px #051a2459;
 }
 .simulator .map-credit {
   font-size: var(--text-xs);
@@ -1137,7 +1121,7 @@
   font-size: 16px;
   gap: 3px;
   margin-top: 4px;
-  padding: 5px 4px;
+  padding: 2px 0;
 }
 .collision-prompt {
   position: absolute;
@@ -1148,12 +1132,10 @@
   width: 360px;
   max-width: calc(100% - 32px);
   padding: 22px;
-  border: 1px solid #ab8860;
-  border-radius: 7px;
-  background: linear-gradient(#302c27, #20201f);
-  box-shadow:
-    inset 0 1px #fff1,
-    0 12px 40px #0007;
+  border: 1px solid #ab886080;
+  border-radius: 12px;
+  background: #102832ed;
+  box-shadow: 0 20px 70px #051a2459;
 }
 .collision-prompt[hidden] {
   display: none;
@@ -1165,10 +1147,11 @@
   left: 14px;
   max-width: calc(100% - 28px);
   padding: 10px 12px;
-  border: 1px solid #74838c;
-  border-radius: 4px;
-  background: #181c20ed;
-  color: #e4e9ed;
+  border: 1px solid #7ba99b50;
+  border-radius: 9px;
+  background: #0d2631de;
+  box-shadow: 0 8px 30px #071a2440;
+  color: #e6f0ec;
   font: 12px var(--ui);
   pointer-events: none;
 }
@@ -1186,19 +1169,19 @@
   font-weight: 600;
 }
 .course-progress #course-count {
-  color: #ffe6a0;
+  color: #c3f0a6;
   font-variant-numeric: tabular-nums;
 }
 .course-progress > span {
   display: block;
-  color: #c4cdd4;
+  color: #a7c1c1;
   line-height: 1.5;
 }
 .course-progress[data-complete='true'] {
-  border-color: #75c69b;
+  border-color: #c3f0a6;
 }
 .course-progress[data-complete='true'] #course-count {
-  color: #75c69b;
+  color: #c3f0a6;
 }
 .viewport-stage[data-layout='camera'] .course-progress {
   top: 14px;
@@ -1253,13 +1236,10 @@
   justify-content: center;
   gap: 9px;
   width: 100%;
-  background: linear-gradient(#efca99, #d3a569);
-  border-color: #f0cfaa;
+  background: #efc58f;
+  border-color: #efc58f;
   color: #2a2016;
-  box-shadow:
-    inset 0 1px #fff5,
-    inset 0 -1px #0003,
-    0 1px 2px #0005;
+  box-shadow: none;
   font-weight: 600;
 }
 
@@ -1388,9 +1368,9 @@
   .station-brand {
     gap: 10px;
   }
-  .brand-mark {
-    width: 26px;
-    height: 26px;
+  .simulator .station-brand .ui-icon {
+    width: 23px;
+    height: 23px;
   }
   .simulator .app-title {
     font-size: 16px;
@@ -1547,7 +1527,7 @@ body.flight-fullscreen {
   padding: 0;
   display: block;
   overflow: hidden;
-  background: #181c20;
+  background: #0d2631;
 }
 .simulator.is-fullscreen.is-expanded {
   position: fixed;
@@ -1591,17 +1571,15 @@ body.flight-fullscreen {
   height: auto;
   aspect-ratio: 16 / 9;
   container-type: size;
-  border: 2px solid #778591;
-  border-radius: 5px;
-  box-shadow:
-    inset 0 1px #fff2,
-    0 6px 22px #0006;
+  border: 1px solid #98beb780;
+  border-radius: 9px;
+  box-shadow: 0 8px 30px #071a2440;
 }
 .simulator.is-fullscreen .camera-title {
   position: absolute;
   padding: 9px 12px;
   font-size: 11px;
-  background: #20272eee;
+  background: #0d2631ee;
 }
 .simulator.is-fullscreen .camera-view {
   width: min(100cqw, calc(100cqh * 16 / 9));
@@ -1633,15 +1611,13 @@ body.flight-fullscreen {
   max-width: none;
   margin: 0;
   border: 0;
-  border-top: 1px solid #70808c;
+  border-top: 1px solid #7ba99b50;
   border-radius: 0;
-  box-shadow:
-    inset 0 1px #ffffff15,
-    0 -3px 12px #0004;
-  background: #1c2024;
+  box-shadow: 0 -8px 30px #071a2426;
+  background: #152730;
 }
 .simulator.is-fullscreen .flight-panel.is-glass {
-  background: #161a1ee6;
+  background: #0d2631de;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }

@@ -17,6 +17,8 @@ export const GAME_PROFILE: FlightProfile = {
   braking: 15,
 };
 export const GAME_BOUNDS = { minX: -14, maxX: 14, minZ: -14, maxZ: 14, ceiling: 18 };
+// Fore/aft limits frame the aircraft in the moving course; only the sides and ceiling are walls.
+const GAME_FLIGHT_BOUNDS = { ...GAME_BOUNDS, minZ: -Infinity, maxZ: Infinity };
 export const GATE_SPACING = 52;
 type InputAxis = keyof Controls;
 export interface Maneuver {
@@ -224,6 +226,7 @@ export interface RushEvent {
 export const angleDifference = (a: number, b: number) =>
   Math.atan2(Math.sin(a - b), Math.cos(a - b));
 export const runSpeed = (run: RushRun) => Math.min(14, 7 + (run.level - 1) * 0.65);
+export const runPace = (run: RushRun) => Math.max(0, runSpeed(run) - run.drone.vz);
 export const multiplier = (run: RushRun) => Math.min(5, 1 + Math.floor(run.combo / 4));
 export const nextRushGate = (run: RushRun) => run.gates.find((gate) => !gate.result);
 export const gateZ = (run: RushRun, gate: RushGate) => run.distance - gate.distance;
@@ -335,7 +338,7 @@ export function stepRush(run: RushRun, input: Controls, dt: number): RushEvent[]
   if (dt <= 0 || dt > 0.05 || run.phase === 'ready' || run.phase === 'over') return [];
   const before = { ...run.drone };
   const previousDistance = run.distance;
-  stepFlight(run.drone, input, dt, GAME_PROFILE, [], GAME_BOUNDS);
+  stepFlight(run.drone, input, dt, GAME_PROFILE, [], GAME_FLIGHT_BOUNDS);
   if (run.drone.mode === 'collided')
     return [
       finishRush(
@@ -350,7 +353,14 @@ export function stepRush(run: RushRun, input: Controls, dt: number): RushEvent[]
     return [];
   }
   run.elapsed += dt;
-  run.distance += runSpeed(run) * dt;
+  const framedZ = Math.max(GAME_BOUNDS.minZ, Math.min(GAME_BOUNDS.maxZ, run.drone.z));
+  // Transfer travel beyond the view into course scrolling, preserving the gap to every gate.
+  // Backward input can stop the course, but cannot reverse distance or previously scored gates.
+  run.distance = Math.max(
+    previousDistance,
+    previousDistance + runSpeed(run) * dt - (run.drone.z - framedZ),
+  );
+  run.drone.z = framedZ;
   const gate = nextRushGate(run);
   const events: RushEvent[] = [];
   if (gate) {

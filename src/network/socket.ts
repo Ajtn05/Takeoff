@@ -13,7 +13,7 @@ export class TrainerSocket {
   constructor(
     private hello: { role: 'host' | 'controller'; sessionId: string; token: string },
     private onMessage: (message: ServerMessage) => void,
-    private onDisconnect: (reason: string) => void,
+    private onDisconnect: (reason: string, code: number) => void,
   ) {
     this.connect();
   }
@@ -39,7 +39,7 @@ export class TrainerSocket {
     ws.addEventListener('close', (event) => {
       if (this.stopped) return;
       this.connected = false;
-      this.onDisconnect(event.reason || 'Connection lost. Reconnecting…');
+      this.onDisconnect(event.reason || 'Connection lost. Reconnecting…', event.code);
       if (!this.stopped && event.code !== 4001 && event.code !== 4003)
         this.retry = setTimeout(() => this.connect(), 1000);
     });

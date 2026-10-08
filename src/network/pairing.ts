@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
 import type { ClientMessage, ServerMessage, SessionInfo } from '../../shared/protocol';
-import { TrainerSocket } from './socket';
+import { HostSession } from './host-session';
 import { elementLookup } from '../ui/dom';
 import { html } from '../ui/markup';
 
@@ -57,9 +57,7 @@ export function pairingDialog(copy: PairingCopy): string {
 }
 
 export class PhonePairing {
-  private socket?: TrainerSocket;
-  private session?: SessionInfo;
-  private connecting?: Promise<void>;
+  private host: HostSession;
   private getElement: ReturnType<typeof elementLookup>;
 
   constructor(
@@ -67,10 +65,16 @@ export class PhonePairing {
     private options: PairingOptions,
   ) {
     this.getElement = elementLookup(root);
+    this.host = new HostSession({
+      receive: (message) => this.receive(message),
+      changed: (session) => this.updateSession(session),
+      unavailable: (error) => this.showError(error),
+    });
     this.getElement('pair').onclick = () => this.show();
     this.getElement('close-pair').onclick = () =>
       this.getElement<HTMLDialogElement>('pair-dialog').close();
     this.getElement<HTMLSelectElement>('connection-path').onchange = () => {
+      this.host.selectPath(this.getElement<HTMLSelectElement>('connection-path').value);
       void this.updateLink().catch((error: unknown) => this.showError(error));
     };
     this.getElement('copy-pair-url').onclick = () => void this.copyLink();
@@ -80,7 +84,7 @@ export class PhonePairing {
       button.disabled = true;
       this.options.pause(this.options.copy.renewReason);
       try {
-        await this.connect();
+        await this.host.connect(true);
       } finally {
         button.disabled = false;
       }
@@ -93,18 +97,15 @@ export class PhonePairing {
   }
 
   send(message: ClientMessage): void {
-    this.socket?.send(message);
+    this.host.send(message);
   }
 
   close(): void {
-    this.socket?.close();
+    this.host.close();
   }
 
   connect(): Promise<void> {
-    this.connecting ??= this.createSession().finally(() => {
-      this.connecting = undefined;
-    });
-    return this.connecting;
+    return this.host.connect();
   }
 
   private async copyLink(): Promise<void> {
@@ -120,7 +121,8 @@ export class PhonePairing {
   }
 
   private async connectUsb(): Promise<void> {
-    if (!this.session) return;
+    const session = this.host.session;
+    if (!session) return;
     const button = this.getElement<HTMLButtonElement>('connect-usb');
     button.disabled = true;
     this.getElement('usb-status').textContent =
@@ -130,9 +132,9 @@ export class PhonePairing {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.session.hostToken}`,
+          Authorization: `Bearer ${session.hostToken}`,
         },
-        body: JSON.stringify({ sessionId: this.session.sessionId }),
+        body: JSON.stringify({ sessionId: session.sessionId }),
       });
       const result = (await response.json()) as { message?: string; error?: string };
       this.getElement('usb-status').textContent =
@@ -146,15 +148,16 @@ export class PhonePairing {
   }
 
   private async updateLink(): Promise<void> {
-    if (!this.session) return;
+    const session = this.host.session;
+    if (!session) return;
     const value = this.getElement<HTMLSelectElement>('connection-path').value;
     const path: ConnectionPath = value === 'wireless' || value === 'usb' ? value : 'lan';
     const url =
       path === 'wireless'
-        ? this.session.publicUrl
+        ? session.publicUrl
         : path === 'usb'
-          ? this.session.usbUrl
-          : this.session.lanUrls[Number(value)];
+          ? session.usbUrl
+          : session.lanUrls[Number(value)];
     if (!url) return;
 
     this.getElement<HTMLInputElement>('pair-url').value = url;
@@ -180,19 +183,7 @@ export class PhonePairing {
     this.options.receive(message);
   }
 
-  private async createSession(): Promise<void> {
-    this.socket?.send({ type: 'revoke' });
-    this.socket?.close();
-    this.socket = undefined;
-    this.session = undefined;
-    this.receive({
-      type: 'connection',
-      connected: false,
-      ready: false,
-      generation: -1,
-      reason: 'Phone pairing reset.',
-    });
-
+  private async updateSession(session?: SessionInfo): Promise<void> {
     const path = this.getElement<HTMLSelectElement>('connection-path');
     path.replaceChildren();
     path.disabled = true;
@@ -201,37 +192,21 @@ export class PhonePairing {
     this.getElement<HTMLInputElement>('pair-url').value = '';
     this.getElement<HTMLButtonElement>('copy-pair-url').disabled = true;
 
-    try {
-      const response = await fetch('/api/session', { method: 'POST' });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? 'Phone pairing is unavailable. Try again.');
-      const session = result as SessionInfo;
-      this.session = session;
-      if (session.publicUrl) path.add(new Option('Wireless · Wi-Fi or mobile data', 'wireless'));
-      if (session.usbUrl) path.add(new Option('USB cable · no Wi-Fi', 'usb'));
-      session.lanUrls.forEach((url, index) => {
-        path.add(new Option(`Wi-Fi · ${new URL(url).hostname}`, String(index)));
-      });
-      path.disabled = false;
-      this.getElement('revoke').textContent = 'Revoke phone & renew link';
-      this.socket = new TrainerSocket(
-        { role: 'host', sessionId: session.sessionId, token: session.hostToken },
-        (message) => this.receive(message),
-        (reason) => {
-          this.receive({
-            type: 'connection',
-            connected: false,
-            ready: false,
-            generation: -1,
-            reason,
-          });
-          this.options.pause(reason, false);
-        },
-      );
-      await this.updateLink();
-    } catch (error) {
-      this.showError(error);
-    }
+    if (!session) return;
+    if (session.publicUrl) path.add(new Option('Wireless · Wi-Fi or mobile data', 'wireless'));
+    if (session.usbUrl) path.add(new Option('USB cable · no Wi-Fi', 'usb'));
+    session.lanUrls.forEach((url, index) => {
+      path.add(new Option(`Wi-Fi · ${new URL(url).hostname}`, String(index)));
+    });
+    if (
+      this.host.path &&
+      Array.from(path.options).some((option) => option.value === this.host.path)
+    )
+      path.value = this.host.path;
+    this.host.selectPath(path.value);
+    path.disabled = false;
+    this.getElement('revoke').textContent = 'Revoke phone & renew link';
+    await this.updateLink();
   }
 
   private showError(error: unknown): void {

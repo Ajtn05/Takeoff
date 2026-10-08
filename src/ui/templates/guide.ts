@@ -244,8 +244,9 @@ npm start</pre>
             again. Then take off from the ground, or tap Resume game in the phone's Game paused
             prompt. Start practice on the laptop also resumes flight. Close open laptop dialogs and
             return to its page before resuming. A collision requires Reset flight. Revoke phone &
-            renew link pairs a replacement phone. Reloading the laptop or restarting the server
-            needs a new link.
+            renew link pairs a replacement phone. Switching modes or reloading the laptop keeps your
+            phone paired; enable controls again and take off. Restarting the server needs a new
+            link.
           </p>
           <button id="guide-pair" class="button">${icon('phone')}<span>Open pairing</span></button>
         </section>

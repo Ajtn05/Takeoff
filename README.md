@@ -110,7 +110,7 @@ Takeoff starts the simulation automatically from the ground. Press **Space** to 
 
 ## Pair an Android phone
 
-The laptop renders the simulator; the phone sends controls and displays flight status. Keep both browser pages open. Only one phone can control a laptop session at a time.
+The laptop renders the simulator; the phone sends controls and displays flight status. Keep both browser pages open. Only one phone can control a laptop session at a time. Pairing follows the laptop browser tab when you switch between Game, the menu, and Practice tool. After switching, center the sticks and select **Enable controls** on the same phone, then take off; you do not need to scan again.
 
 For a hosted deployment, use the [wireless QR pairing steps above](#open-a-hosted-version). The following USB and LAN instructions apply to a local server.
 
@@ -181,7 +181,7 @@ Allow the local Node server through the Mac firewall if prompted. Guest or class
 
 Keep the phone awake. The controller requests a screen wake lock where supported; if it says **Set screen timeout manually**, adjust the phone's timeout. Plain HTTP over Wi-Fi cannot use this feature. **Fullscreen** on the phone hides browser controls where supported, and **Stick size** adjusts the touch areas.
 
-To replace the controlling phone, open **Pair phone** and select **Revoke phone & renew link**, then pair with the new QR code. A second phone cannot take over an occupied session. Links expire after 12 hours; after restarting the server or reloading the laptop page, use the current pairing link.
+To replace the controlling phone, open **Pair phone** and select **Revoke phone & renew link**, then pair with the new QR code. A second phone cannot take over an occupied session. Reloading the laptop page retains pairing in the same tab and pauses controls. Links expire after 12 hours; after restarting the server or closing the laptop tab, use the current pairing link.
 
 To return to keyboard practice, choose **Keyboard** in the laptop's **Controls** menu. Select **Take off** from the ground, or **Start practice** to resume an airborne flight.
 

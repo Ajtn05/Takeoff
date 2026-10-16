@@ -3,7 +3,7 @@ import { readBestScore } from '../game/scores';
 import { HostSession } from '../network/host-session';
 import { STATUS_INTERVAL_MS } from '../flight/clock';
 import type { Telemetry } from '../../shared/protocol';
-import '../styles/game.css';
+import '../styles/menu.css';
 
 export function mount(app: HTMLElement): void {
   document.title = 'Takeoff · Choose your flight';

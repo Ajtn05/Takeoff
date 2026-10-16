@@ -48,6 +48,15 @@ export function pairingDialog(copy: PairingCopy): string {
       </label>
       <button id="copy-pair-url" class="button quiet" disabled>Copy phone link</button>
       <p id="pair-instructions" class="pair-instructions"></p>
+      <details class="remote-pairing">
+        <summary>Use a DJI RC231 remote</summary>
+        <p>
+          Install Takeoff Remote on your Android phone and connect the RC231 using its phone cable.
+          Keep the drone switched off. Choose a wireless or Wi-Fi connection above, then scan this
+          code inside Takeoff Remote. Center both sticks and enable controls.
+        </p>
+        <a id="open-dji-remote" class="button quiet" hidden>Open Takeoff Remote on this device</a>
+      </details>
       <div class="pair-actions">
         <button id="revoke" class="button danger">Revoke phone & renew link</button>
         <span id="pair-state">Waiting for a phone</span>
@@ -161,6 +170,9 @@ export class PhonePairing {
     if (!url) return;
 
     this.getElement<HTMLInputElement>('pair-url').value = url;
+    const remoteLink = this.getElement<HTMLAnchorElement>('open-dji-remote');
+    remoteLink.href = `takeoff://pair?url=${encodeURIComponent(url)}`;
+    remoteLink.hidden = path === 'usb';
     this.getElement('usb-setup').hidden = path !== 'usb';
     await QRCode.toCanvas(this.getElement<HTMLCanvasElement>('qr'), url, {
       width: 208,
@@ -190,6 +202,7 @@ export class PhonePairing {
     this.getElement('qr').hidden = true;
     this.getElement('usb-setup').hidden = true;
     this.getElement<HTMLInputElement>('pair-url').value = '';
+    this.getElement('open-dji-remote').hidden = true;
     this.getElement<HTMLButtonElement>('copy-pair-url').disabled = true;
 
     if (!session) return;

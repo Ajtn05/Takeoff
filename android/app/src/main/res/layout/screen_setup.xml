@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/setup_screen" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true" android:clipToPadding="false">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="20dp" android:paddingTop="22dp" android:paddingBottom="24dp">
+        <TextView style="@style/RemoteText.Title" android:text="Set up your remote" android:accessibilityHeading="true" />
+        <TextView style="@style/RemoteText.Body" android:text="Connect your RC231 and pair the laptop. Then head to Controls to fly." android:layout_marginTop="8dp" />
+        <TextView style="@style/RemoteText.Label" android:text="SIMULATOR ONLY · KEEP THE AIRCRAFT OFF" android:textColor="@color/accent" android:layout_marginTop="18dp" android:letterSpacing="0.04" />
+        <LinearLayout style="@style/RemoteCard">
+            <TextView style="@style/RemoteText.Label" android:text="01 · REMOTE" android:textColor="@color/accent" />
+            <TextView style="@style/RemoteText.Section" android:text="Connect the RC231" android:layout_marginTop="6dp" />
+            <TextView style="@style/RemoteText.Body" android:text="Use the cable under the remote’s phone holder. Close DJI Fly before connecting." android:layout_marginTop="8dp" />
+            <Button android:id="@+id/connect_remote" style="@style/RemoteButton" android:text="Connect remote" android:layout_marginTop="14dp" />
+            <TextView android:id="@+id/sdk_status" style="@style/RemoteText.Body" android:text="Tap Connect remote to begin." android:layout_marginTop="12dp" android:accessibilityLiveRegion="polite" />
+            <TextView android:id="@+id/remote_status" style="@style/RemoteText.Mono" android:text="Waiting for your remote." android:layout_marginTop="6dp" />
+        </LinearLayout>
+        <LinearLayout style="@style/RemoteCard">
+            <TextView style="@style/RemoteText.Label" android:text="02 · LAPTOP" android:textColor="@color/accent" />
+            <TextView style="@style/RemoteText.Section" android:text="Pair with Takeoff" android:layout_marginTop="6dp" />
+            <TextView style="@style/RemoteText.Body" android:text="Open Pair phone on your laptop. Use the Wi-Fi or hosted simulator link." android:layout_marginTop="8dp" />
+            <Button android:id="@+id/scan" style="@style/RemoteButton.Primary" android:text="Scan QR code" android:drawableStart="@drawable/ic_qr" android:layout_marginTop="14dp" />
+            <TextView style="@style/RemoteText.Body" android:text="Or paste the phone link" android:labelFor="@id/pair_url" android:layout_marginTop="16dp" />
+            <EditText android:id="@+id/pair_url" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="52dp" android:layout_marginTop="8dp" android:padding="12dp" android:background="@drawable/field_background" android:backgroundTint="@null" android:textColor="@color/text_primary" android:textColorHint="@color/text_muted" android:textSize="13sp" android:hint="Paste the complete phone link" android:inputType="textUri" android:maxLines="3" android:autofillHints="" android:importantForAutofill="no" />
+            <Button android:id="@+id/pair" style="@style/RemoteButton" android:text="Pair laptop" android:layout_marginTop="10dp" />
+            <TextView android:id="@+id/pairing_feedback" style="@style/RemoteText.Body" android:text="" android:textColor="@color/warning" android:layout_marginTop="10dp" android:visibility="gone" android:accessibilityLiveRegion="polite" />
+            <TextView android:id="@+id/laptop_status" style="@style/RemoteText.Body" android:text="Laptop not paired." android:layout_marginTop="12dp" android:accessibilityLiveRegion="polite" />
+        </LinearLayout>
+        <LinearLayout style="@style/RemoteCard">
+            <TextView style="@style/RemoteText.Label" android:text="03 · PREFERENCES" android:textColor="@color/accent" />
+            <TextView style="@style/RemoteText.Section" android:text="Choose your stick layout" android:layout_marginTop="6dp" />
+            <TextView style="@style/RemoteText.Body" android:text="Stick mode" android:labelFor="@id/stick_mode" android:layout_marginTop="14dp" />
+            <Spinner android:id="@+id/stick_mode" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="8dp" android:paddingHorizontal="0dp" android:popupBackground="@drawable/panel_background" android:background="@drawable/field_background" />
+            <CheckBox android:id="@+id/invert_dial" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:layout_marginTop="4dp" android:text="Reverse camera dial" android:textSize="14sp" android:textColor="@color/text_primary" />
+            <TextView style="@style/RemoteText.Body" android:text="Axis labels on the Controls screen follow this choice." android:layout_marginTop="4dp" />
+        </LinearLayout>
+        <Button android:id="@+id/open_controls" style="@style/RemoteButton.Primary" android:text="Open flight controls" android:drawableStart="@drawable/ic_controls" android:layout_marginTop="20dp" />
+        <Button android:id="@+id/toggle_diagnostics" style="@style/RemoteButton.Quiet" android:text="Show remote diagnostics" android:layout_marginTop="12dp" />
+        <LinearLayout android:id="@+id/diagnostics_panel" style="@style/RemoteCard" android:visibility="gone">
+            <TextView style="@style/RemoteText.Label" android:text="REMOTE DIAGNOSTICS" />
+            <TextView android:id="@+id/raw_values" style="@style/RemoteText.Mono" android:text="Sticks · no readings" android:layout_marginTop="10dp" />
+            <TextView android:id="@+id/raw_dial_value" style="@style/RemoteText.Mono" android:text="Camera dial · no readings" android:layout_marginTop="10dp" />
+            <TextView android:id="@+id/button_values" style="@style/RemoteText.Mono" android:text="Buttons · no readings" android:layout_marginTop="10dp" />
+            <TextView android:id="@+id/switch_value" style="@style/RemoteText.Mono" android:text="Mode switch · no readings" android:layout_marginTop="10dp" />
+            <TextView android:id="@+id/mapped_values" style="@style/RemoteText.Mono" android:text="Flight inputs · unavailable" android:layout_marginTop="10dp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

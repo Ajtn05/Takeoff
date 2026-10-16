@@ -1,0 +1,2 @@
+<?xml version='1.0' encoding='utf-8'?>
+<com.journeyapps.barcodescanner.DecoratedBarcodeView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:ns1="http://schemas.android.com/apk/res-auto" android:id="@+id/pairing_scanner" android:layout_width="match_parent" android:layout_height="match_parent" ns1:zxing_scanner_layout="@layout/pairing_scanner_contents" ns1:zxing_preview_scaling_strategy="centerCrop" ns1:zxing_use_texture_view="false" />

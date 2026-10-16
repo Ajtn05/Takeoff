@@ -1,0 +1,14 @@
+<resources>
+    <color name="surface">#101A22</color>
+    <color name="panel">#18252E</color>
+    <color name="panel_raised">#22323B</color>
+    <color name="line">#2A3941</color>
+    <color name="text_primary">#E9EEED</color>
+    <color name="text_secondary">#A2B7BA</color>
+    <color name="text_muted">#85969F</color>
+    <color name="accent">#BDEDCA</color>
+    <color name="on_accent">#173129</color>
+    <color name="accent_panel">#253B38</color>
+    <color name="warning">#EBC69C</color>
+    <color name="disabled_text">#637680</color>
+</resources>

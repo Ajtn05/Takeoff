@@ -16,6 +16,7 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "test:browser": "playwright test",
     "test:hosted": "playwright test --config playwright.hosted.config.ts",
+    "test:android-relay": "node --import tsx scripts/test-android-relay.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

@@ -1,0 +1,57 @@
+plugins { id 'com.android.application' }
+
+def keyFile = rootProject.file('key.properties')
+def keyProperties = new Properties()
+if (keyFile.exists()) keyFile.withInputStream { keyProperties.load(it) }
+def appKey = providers.environmentVariable('DJI_APP_KEY').getOrElse(keyProperties.getProperty('djiAppKey', ''))
+
+android {
+    namespace 'com.takeoff.rc231'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.takeoff.rc231'
+        minSdk 26
+        // DJI MSDK 4.18's official sample targets Android 14.
+        targetSdk 34
+        versionCode 4
+        versionName '0.2.0'
+        manifestPlaceholders = [djiAppKey: appKey]
+        buildConfigField 'boolean', 'HAS_DJI_KEY', appKey.isEmpty() ? 'false' : 'true'
+        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
+    }
+    buildFeatures { buildConfig true }
+    testOptions { unitTests.includeAndroidResources = true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    packaging {
+        jniLibs { useLegacyPackaging = true; keepDebugSymbols += ['**/*.so'] }
+        resources {
+            excludes += ['META-INF/rxjava.properties', 'META-INF/DEPENDENCIES',
+                         'assets/location_map_gps_locked.png', 'assets/location_map_gps_3d.png']
+        }
+    }
+}
+
+dependencies {
+    implementation project(':bridge')
+    implementation('com.dji:dji-sdk:4.18') { exclude module: 'library-anti-distortion' }
+    compileOnly 'com.dji:dji-sdk-provided:4.18'
+    // DJI's bundled layouts refer to AppCompat and ConstraintLayout attributes.
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.16.1'
+}
+
+tasks.register('checkDjiKey') {
+    doLast {
+        if (appKey.isEmpty()) throw new GradleException('Set DJI_APP_KEY or djiAppKey in key.properties for com.takeoff.rc231. See README.md.')
+    }
+}
+
+tasks.withType(Test).configureEach {
+    systemProperty 'takeoff.previewDir', rootProject.file('../artifacts/android/ui-preview').absolutePath
+}

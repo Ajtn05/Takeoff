@@ -1,5 +1,6 @@
 :root {
   --ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --display: 'Avenir Next', var(--ui);
   font-family: var(--ui);
   color: #e9eeed;
   background: #101a22;
@@ -292,6 +293,26 @@ dialog p {
 #copy-pair-url {
   margin-top: 10px;
   font-size: 11px;
+}
+
+.remote-pairing {
+  margin-top: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.remote-pairing summary {
+  cursor: pointer;
+  color: #dce8e7;
+}
+
+.remote-pairing a {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.remote-pairing a[hidden] {
+  display: none;
 }
 
 .url-label {

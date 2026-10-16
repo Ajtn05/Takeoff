@@ -106,13 +106,13 @@ export function bindGameView(root: HTMLElement): (state: GameViewState) => void 
         ? 'NEW PERSONAL BEST'
         : 'FLIGHT COMPLETE'
       : ready
-        ? 'THE CITY IS YOUR FLIGHT PATH'
-        : 'TAKE A BREATHER';
+        ? 'Flight Rush'
+        : 'Run paused';
     getElement('game-title').innerHTML = over
       ? `${run.score.toLocaleString()}<br><em>points banked.</em>`
       : ready
-        ? 'Ready for<br><em>the rush?</em>'
-        : 'Flight<br><em>on hold.</em>';
+        ? 'Ready for the rush?'
+        : 'Flight on hold.';
     getElement('game-prompt-copy').textContent = over
       ? run.endReason
       : ready

@@ -1,61 +1,58 @@
 import { icon } from '../icons';
 import { html } from '../markup';
 import { takeoffWordmark } from './common';
+import campusPreview from '../../../docs/images/map-ateneo.png';
 
 export function menuMarkup(bestScore: number): string {
   return html` <main class="launch-menu">
     <header class="launch-header">
-      ${takeoffWordmark()}<span>YOUR NEXT FLIGHT STARTS HERE</span>
+      ${takeoffWordmark()}<span>Drone flight & photography simulator</span>
     </header>
     <section class="launch-intro">
-      <span class="eyebrow">FLY THE ROUTE. FIND THE SHOT.</span>
-      <h1>Where will you<br /><em>take it?</em></h1>
-      <p>
-        One drone. Two ways to fly.<br />Chase a high score or take your time behind the sticks.
-      </p>
+      <h1>Where will you take it?</h1>
+      <p>Chase a high score or find a new perspective. Choose your flight and make it yours.</p>
     </section>
     <section class="mode-choices" aria-label="Choose a mode">
       <a class="mode-card game-card" href="/game" aria-label="Play game">
         <div class="mode-art run-art" aria-hidden="true">
-          <div class="art-grid"></div>
-          <i class="art-gate gate-one"></i><i class="art-gate gate-two"></i
-          ><i class="art-gate gate-three"></i><span class="art-flight">${icon('aids')}</span
-          ><span class="art-badge">ENDLESS FLIGHT</span>
+          <img class="mode-preview" src="/images/flight-rush.svg" alt="" />
+          <span class="art-badge">${icon('play')} Endless course</span>
+          <span class="preview-caption">Fly the route.</span>
         </div>
         <div class="mode-card-body">
-          <span class="eyebrow">01 / GAME</span>
-          <h2>Flight Rush ${icon('play')}</h2>
-          <p>
-            Thread the gates. Master every move. Keep your streak alive as the course picks up
-            speed.
-          </p>
+          <div class="mode-card-heading">
+            <h2>Flight Rush</h2>
+            <span class="mode-kind">Game</span>
+          </div>
+          <p>Thread the gates, build your streak, and see how far you can fly.</p>
           <div class="mode-card-meta">
-            <span>3rd-person chase · Scored runs</span><strong>PLAY ${icon('play')}</strong>
+            <span>${icon('speed')} Beat your best</span><strong>Play game ${icon('play')}</strong>
           </div>
         </div>
       </a>
       <a class="mode-card practice-card" href="/practice" aria-label="Open practice tool">
         <div class="mode-art practice-art" aria-hidden="true">
-          <div class="art-grid"></div>
-          <i class="art-building building-one"></i><i class="art-building building-two"></i
-          ><i class="art-building building-three"></i><span class="art-frame">${icon('frame')}</span
-          ><span class="art-badge">ROOM TO EXPLORE</span>
+          <img class="mode-preview campus-preview" src="${campusPreview}" alt="" />
+          <span class="art-badge">${icon('camera')} Free flight & photography</span>
+          <span class="preview-caption">Find the shot.</span>
+          <span class="preview-location">${icon('pin')} Ateneo de Manila</span>
         </div>
         <div class="mode-card-body">
-          <span class="eyebrow">02 / PRACTICE TOOL</span>
-          <h2>Your flight station ${icon('observer')}</h2>
-          <p>
-            Explore the maps, learn the controls, follow a car, and find your next camera angle.
-          </p>
+          <div class="mode-card-heading">
+            <h2>Your flight station</h2>
+            <span class="mode-kind">Practice</span>
+          </div>
+          <p>Learn the controls, explore four maps, and bring home the shot.</p>
           <div class="mode-card-meta">
-            <span>Free flight · Photography · Routes</span><strong>EXPLORE ${icon('play')}</strong>
+            <span>${icon('map')} Explore at your pace</span
+            ><strong>Open practice ${icon('play')}</strong>
           </div>
         </div>
       </a>
     </section>
     <footer class="launch-footer">
-      <span>${icon('phone')} Keyboard or paired phone. Same controls in both modes.</span
-      ><span>FLIGHT RUSH BEST <strong>${bestScore.toLocaleString()}</strong></span>
+      <span>${icon('phone')} Fly with your keyboard or pair a phone.</span
+      ><span>Flight Rush personal best <strong>${bestScore.toLocaleString()}</strong></span>
     </footer>
   </main>`;
 }

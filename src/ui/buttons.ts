@@ -16,5 +16,5 @@ export const iconControl = (
     data-tooltip="${hint}"
     ${attributes}
   >
-    ${icon(name)}
+    ${icon(name)}${classes.includes('has-label') ? html`<span>${label}</span>` : ''}
   </button>`;

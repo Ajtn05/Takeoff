@@ -1,0 +1,4 @@
+# Register an Android Mobile SDK app for package com.takeoff.rc231 at
+# https://developer.dji.com/user/apps/
+# Copy this file to key.properties and enter that app's key.
+djiAppKey=

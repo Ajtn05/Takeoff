@@ -110,6 +110,8 @@ Takeoff starts the simulation automatically from the ground. Press **Space** to 
 
 ## Pair an Android phone
 
+To use a physical **DJI RC231 / RC-N1** remote, build and install the [Takeoff Remote Android companion app](android/README.md). It connects the remote to the phone by USB and sends controls to the laptop over Wi-Fi or the hosted relay. It includes a stick/button monitor, DJI Modes 1–3, camera-dial input, and pause-on-disconnect behavior. A DJI Android SDK app key is required. Physical remote and phone compatibility still need verification; keep the real drone switched off.
+
 The laptop renders the simulator; the phone sends controls and displays flight status. Keep both browser pages open. Only one phone can control a laptop session at a time. Pairing follows the laptop browser tab when you switch between Game, the menu, and Practice tool. After switching, center the sticks and select **Enable controls** on the same phone, then take off; you do not need to scan again.
 
 For a hosted deployment, use the [wireless QR pairing steps above](#open-a-hosted-version). The following USB and LAN instructions apply to a local server.

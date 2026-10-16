@@ -19,6 +19,12 @@ test('hosted wireless pairing controls only its own station and renewing the lin
   );
   await expect(page.locator('#copy-pair-url')).toBeEnabled();
   const url = await page.locator('#pair-url').inputValue();
+  await page.locator('.remote-pairing summary').click();
+  await expect(page.locator('#open-dji-remote')).toHaveAttribute(
+    'href',
+    `takeoff://pair?url=${encodeURIComponent(url)}`,
+  );
+  await expect(page.locator('#open-dji-remote')).toBeVisible();
   expect(new URL(url).origin).toBe(baseURL);
   expect(new URL(url).pathname).toBe('/controller');
   await page.locator('#close-pair').click();

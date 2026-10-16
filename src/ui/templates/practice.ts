@@ -15,6 +15,7 @@ export function practiceMarkup(): string {
         >${icon('aids')}
         <h1 class="app-title">TAKEOFF</h1></a
       >
+      <span class="station-mode">Practice tool</span>
       <div class="toolbar">
         <div
           id="transport-controls"
@@ -32,7 +33,7 @@ export function practiceMarkup(): string {
           aria-label="Station controls"
         >
           ${iconControl('simulator-fullscreen', 'fullscreen', 'Fullscreen', 'aria-pressed="false"')}
-          ${iconControl('pair', 'phone', 'Pair phone')}
+          ${iconControl('pair', 'phone', 'Pair phone', '', 'Pair phone', 'button quiet icon-control has-label')}
         </div>
         <div
           id="assistance-controls"
@@ -54,7 +55,8 @@ export function practiceMarkup(): string {
     </header>
     <section class="map-strip" aria-label="Practice location">
       <label class="map-choice" title="Practice location"
-        >${icon('map')}<select id="map" aria-label="Choose a map">
+        ><span class="map-field-label">${icon('map')} Location</span
+        ><select id="map" aria-label="Choose a map">
           <option value="park">Practice park</option>
           <option value="rally">Rally circuit · Tracking</option>
           <option value="silverstone">Silverstone · Formula One</option>
@@ -62,10 +64,12 @@ export function practiceMarkup(): string {
         </select></label
       >
       <label id="spot-control" class="map-choice" title="Practice route"
-        >${icon('pin')}<select id="photo-spot" aria-label="Choose a practice route"></select
+        ><span class="map-field-label">${icon('pin')} Route</span
+        ><select id="photo-spot" aria-label="Choose a practice route"></select
       ></label>
       <label class="map-choice" title="Flight speed limit"
-        >${icon('speed')}<select id="flight-speed" aria-label="Flight speed limit">
+        ><span class="map-field-label">${icon('speed')} Speed limit</span
+        ><select id="flight-speed" aria-label="Flight speed limit">
           <option value="5">5 m/s</option>
           <option value="10">10 m/s</option>
           <option value="20" selected>20 m/s</option>
@@ -158,7 +162,7 @@ export function practiceMarkup(): string {
       </div>
       <aside id="camera-column" class="camera-column">
         <div class="camera-title">
-          <span>Camera</span
+          <span>${icon('camera')} Drone camera</span
           ><span
             class="camera-spec"
             title="16:9 · 64° field of view · 1280 × 720 PNG captures"
@@ -264,21 +268,27 @@ export function practiceMarkup(): string {
     </section>
     <section id="flight-console" class="flight-strip">
       <div class="flight-actions control-module" role="group" aria-label="Flight actions">
-        ${iconControl('takeoff', 'takeoff', 'Take off', 'disabled', 'Take off · T')}${iconControl('land', 'land', 'Land', 'disabled', 'Land · L')}<span
+        ${iconControl('takeoff', 'takeoff', 'Take off', 'disabled', 'Take off · T', 'button primary icon-control has-label')}${iconControl('land', 'land', 'Land', 'disabled', 'Land · L', 'button quiet icon-control has-label')}<span
           class="action-divider"
         ></span
-        >${iconControl('capture', 'camera', 'Capture photo', 'disabled', 'Capture photo · C', 'button shutter icon-control')}
+        >${iconControl('capture', 'camera', 'Capture photo', 'disabled', 'Capture photo · C', 'button shutter icon-control has-label')}
       </div>
       <div class="view-options control-module" role="group" aria-label="Display options">
         ${iconControl('aids', 'aids', 'Observer aids', 'aria-pressed="true"')}${iconControl('grid', 'grid', 'Thirds grid', 'aria-pressed="true"')}${iconControl('trees', 'tree', 'Campus trees', 'aria-pressed="true" hidden', 'Show or hide campus trees')}${iconControl('quality', 'quality', 'Low graphics', 'aria-pressed="false"')}
       </div>
       <label class="source-control control-module"
-        ><span class="sr-only">Controls</span>${controlSourceSelector()}</label
+        ><span>Controls</span>${controlSourceSelector()}</label
       >
     </section>
     <section class="photo-library" aria-label="Photo gallery">
       <span class="section-label">Photos <span id="photo-count">0</span></span>
-      <div id="photos"><span class="empty-photos">No photos.</span></div>
+      <div id="photos">
+        <span class="empty-photos"
+          >${icon('camera')}<span
+            >Your photos land here. Frame a shot, then select Capture photo.</span
+          ></span
+        >
+      </div>
     </section>
     <p id="map-credit" class="map-credit" hidden>
       1:1 meter scale · 30 m elevation data, smoothed · building details and satellite tree

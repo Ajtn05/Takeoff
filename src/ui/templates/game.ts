@@ -8,7 +8,7 @@ import { takeoffWordmark, controlSourceSelector, toastMarkup } from './common';
 export function gameMarkup(): string {
   return html`<main class="rush-game">
     <header class="rush-header">
-      ${takeoffWordmark()}<span class="rush-mode-label">FLIGHT RUSH <i>ENDLESS</i></span>
+      ${takeoffWordmark()}<span class="rush-mode-label">Flight Rush <i>Endless</i></span>
       <div class="rush-tools">
         <label><span class="sr-only">Controls</span>${controlSourceSelector()}</label
         ><button id="pair" class="button quiet">${icon('phone')}<span>Pair phone</span></button
@@ -78,8 +78,8 @@ export function gameMarkup(): string {
       </div>
       <div id="game-overlay" class="rush-overlay">
         <section class="rush-prompt" aria-labelledby="game-title">
-          <span class="eyebrow" id="game-prompt-eyebrow">THE CITY IS YOUR FLIGHT PATH</span>
-          <h1 id="game-title">Ready for<br /><em>the rush?</em></h1>
+          <span class="eyebrow" id="game-prompt-eyebrow">Flight Rush</span>
+          <h1 id="game-title">Ready for the rush?</h1>
           <p id="game-prompt-copy">
             An endless course. Your usual drone controls.<br />Make the move and clear the gate to
             build your score.
